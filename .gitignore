@@ -1,0 +1,8 @@
+**/build/
+cmake_install.cmake
+*.blend*
+!/**/**/model/
+**/**/build_latex/
+**/.cache
+**/compile_commands.json
+**/*.zip
