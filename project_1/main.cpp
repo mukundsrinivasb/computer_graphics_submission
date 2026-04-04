@@ -2,7 +2,6 @@
 #include <opencv2/opencv.hpp>
 #include <Eigen/Eigen>
 #include <SDL2/SDL_keyboard.h>
-#include <SDL2/SDL_events.h>
 
 // Represents the current state of the animal
 struct animal {
