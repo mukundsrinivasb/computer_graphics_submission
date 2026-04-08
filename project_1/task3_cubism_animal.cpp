@@ -14,6 +14,8 @@
 #include <cmath>
 #include <memory>
 #include <Eigen/Dense>
+#include<GLFW/glfw3.h>
+#include<GL/glu.h>
 
 using namespace std;
 using namespace Eigen;
@@ -54,7 +56,6 @@ struct ModelNode {
 
 // ---- Transformation Matrices ----
 
-// TODO
 Matrix4f translationMatrix(const Vector3f& t) {
     Matrix4f M = Matrix4f::Identity();
     M(0, 3) = t.x();
@@ -63,7 +64,6 @@ Matrix4f translationMatrix(const Vector3f& t) {
     return M;
 }
 
-// TODO
 Matrix4f scalingMatrix(const Vector3f& s) {
     Matrix4f M = Matrix4f::Identity();
     M(0, 0) = s.x();
@@ -72,7 +72,6 @@ Matrix4f scalingMatrix(const Vector3f& s) {
     return M;
 }
 
-// TODO (remember to convert degrees to radians)
 Matrix4f rotationX(float degrees) {
     float r = degrees * M_PI / 180.0f;
     Matrix4f M = Matrix4f::Identity();
@@ -88,7 +87,6 @@ Matrix4f rotationX(float degrees) {
     return M;
 }
 
-// TODO
 Matrix4f rotationY(float degrees) {
     float r = degrees * M_PI / 180.0f;
     Matrix4f M = Matrix4f::Identity();
@@ -104,7 +102,6 @@ Matrix4f rotationY(float degrees) {
     return M;
 }
 
-// TODO
 Matrix4f rotationZ(float degrees) {
     float r = degrees * M_PI / 180.0f;
     Matrix4f M = Matrix4f::Identity();
@@ -126,7 +123,6 @@ Matrix4f rotationMatrix(const Vector3f& eulerDeg) {
 
 // ---- Unit Cube ----
 
-// TODO: unit cube centered at origin, 8 vertices, 12 triangles (CCW winding)
 Mesh createUnitCube() {
     Mesh mesh;
     mesh.vertices = {
@@ -149,13 +145,11 @@ Mesh createUnitCube() {
 
 // ---- Hierarchical Mesh Collection ----
 
-// TODO: traverse the tree, transform each node's cube, collect into outVerts/outFaces.
-// Important: pass jointWorld (Translation*Rotation only, no scale) to children, not meshWorld.
 void collectMeshes(const ModelNode* node,
                    const Matrix4f& parentJointWorld,
                    vector<Vector3f>& outVerts,
                    vector<Triangle>& outFaces) {
-    // TODO
+    
     Matrix4f rotation = rotationMatrix(node->rotation);
     Matrix4f translation = translationMatrix(node->position);
     Matrix4f scale = scalingMatrix(node->scale);
@@ -195,7 +189,7 @@ void collectMeshes(const ModelNode* node,
 
 // ---- OBJ Export ----
 
-// TODO: write vertices and faces to .obj (OBJ indices are 1-based!) (1-based means 1-indexed)
+// write vertices and faces to .obj (OBJ indices are 1-based!) (1-based means 1-indexed)
 void exportOBJ(const string& filename,
                const vector<Vector3f>& vertices,
                const vector<Triangle>& faces) {
@@ -237,7 +231,6 @@ void printHierarchy(const ModelNode* node, int depth = 0) {
 
 // ---- Build Your Animal ----
 
-// TODO: build your animal here (at least 6-8 parts)
 unique_ptr<ModelNode> buildAnimalModel() {
     auto body = make_unique<ModelNode>(
         "Body",
@@ -245,8 +238,6 @@ unique_ptr<ModelNode> buildAnimalModel() {
         Vector3f(0, 0, 0),
         Vector3f(1.2f, 1.0f, 2.0f));
 
-    // TODO: use addChild() to attach parts
-    // e.g. body->addChild("Head", Vector3f(0, 0.5f, 1.3f), Vector3f(0.8f, 0.8f, 0.8f));
     
     auto head = body->addChild("Head", Vector3f(0, 0.8f, 1.2f), Vector3f(1.2f, 1, 1), Vector3f(-10, 0, 0));
     auto snout = head->addChild("Snout", Vector3f(0, -0.25f, 0.68f), Vector3f(1.2, 0.5f, 0.36f), Vector3f(0, 0, 0));
@@ -262,6 +253,47 @@ unique_ptr<ModelNode> buildAnimalModel() {
     auto legBR = body->addChild("Back right leg", Vector3f(-0.4f, -0.85f, -0.95f), Vector3f(0.4f, 1, 0.4f), Vector3f(25, 0, 0));
 
     return body;
+}
+
+//Render a mesh using OpenGL
+void drawMesh(const Mesh& mesh){
+  glBegin(GL_TRIANGLE);
+  for(const Triangle& t : mesh.faces){
+    //Vertices
+    const Vector3f& v0 = mesh.vertices[t.v0];
+    const Vector3f& v1 = mesh.vertices[t.v1];
+    const Vector3f& v2 = mesh.vertices[t.v2];
+    //Caculate Normal
+    const Vector3f& edge1 = v1-v0;
+    const Vector3f& edge2 = v2-v0;
+    const Vector3f& normal = edge1.cross(edge2).normalized();
+    //Tell OpenGL which way this triangle is facing
+    glVertex3f(v0.x(),v0.y(),v0.z());
+    glVertex3f(v1.x(),v1.y(),v1.z());
+    glVertex3f(v2.x(),v2.y(),v2.z());
+    glNormal(normal.x(),normal.y(),normal.z());
+
+  }
+  gelEnd();
+
+}
+
+void renderNode(const ModelNode* node){
+  glPushMatrix();
+  glTranslatef(node->position.x(),node->position.y(),node->position.z());
+  //Using angle axis rotations defined within OpenGL
+  glRotatef(node->rotation.z(),0.0f,0.0f,1.0f);
+  glRotatef(node->rotation.y(),0.0f,1.0f,0.0f);
+  glRotatef(node->rotation.x(),1.0f,0.0f,0.0f);
+    glPushMatrix();
+      glScalef(node->scale.x(),node->scale.y(),node->scale.z());
+      drawMesh(createUnitCube());
+    glPopMatrix();
+    
+    for(const unique_ptr<ModelNode>& child : node->children){
+      renderNode(child.get());
+    }
+
 }
 
 // ---- Main ----
@@ -284,17 +316,16 @@ int main() {
 
     exportOBJ("../model/cubism_animal.obj", allVertices, allFaces);
 
-    int V = (int)allVertices.size();
-    int F = (int)allFaces.size();
-    int E = F * 3 / 2;
+    if(!glfwInit())
+      return -1;
+    GLFWwindow* window = glfwCreateWindow(800,600,"Render Animal",NULL,NULL);
+    if(!window){
+      glfwTerminate();
+      return -1;
+    }
 
-    cout << endl;
-    cout << "--- Model Statistics ---" << endl;
-    cout << "Total vertices  (V): " << V << endl;
-    cout << "Total edges     (E): " << E << endl;
-    cout << "Total faces     (F): " << F << endl;
-    cout << "Euler: V - E + F = " << (V - E + F) << endl;
+    glfwMakeContextCurrent(window);
 
-    cout << endl << "Done. Open model/cubism_animal.obj in MeshLab to visualize." << endl;
+
     return 0;
 }
