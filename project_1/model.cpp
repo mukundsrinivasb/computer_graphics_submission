@@ -6,8 +6,12 @@
 using namespace std;
 using namespace Eigen;
 
-ModelNode* ModelNode::addChild(const string& name, const Vector3f& pos, const Vector3f& scl, const Vector3f& rot) {
-    children.push_back(make_unique<ModelNode>(name, pos, rot, scl));
+ModelNode* ModelNode::addChild(const string& name,
+                               const Vector3f& pos,
+                               const Vector3f& scl,
+                               const Vector3f& rot, 
+                               const Vector3f& pre_pos) {
+    children.push_back(make_unique<ModelNode>(name, pos, rot, scl, pre_pos));
     return children.back().get();
 }
 
@@ -72,8 +76,9 @@ void collectMeshes(const ModelNode* node, const Matrix4f& parentJointWorld, vect
     Matrix4f rotation = rotationMatrix(node->rotation);
     Matrix4f translation = translationMatrix(node->position);
     Matrix4f scale = scalingMatrix(node->scale);
+    Matrix4f pre_translation = translationMatrix(node->pre_position);
 
-    Matrix4f jointWorld = parentJointWorld * translation * rotation;
+    Matrix4f jointWorld = parentJointWorld * translation * rotation * pre_translation;
     const Matrix4f& passJointWorld = jointWorld;
 
     for (int i = 0; i < node->children.size(); i++){
@@ -119,21 +124,37 @@ void printHierarchy(const ModelNode* node, int depth) {
     for (const auto& child : node->children) { printHierarchy(child.get(), depth + 1); }
 }
 
-unique_ptr<ModelNode> buildAnimalModel() {
+unique_ptr<ModelNode> buildAnimalModel() {return buildAnimalModelAtTime(0);}
+
+// given the amount of time (in seconds) since the start of the animation,
+// give the scalars which will modify the rotations of moving body parts
+// at that time
+static std::tuple<float, float, float, float> time_to_scalars(float time){
+    float legs = sin(M_PI*time); //scalar for leg cycle
+    float head = cos(M_PI*time*2); //scalar for head cycle
+    float ears = cos(M_PI*(time-0.1)*2); //scalar for ears cycle
+    float tail = cos(M_PI*time*2); //scalar for tail cycle
+
+    return {head, ears, tail, legs};
+}
+
+unique_ptr<ModelNode> buildAnimalModelAtTime(float time) {
+    auto[h, e, t, l] = time_to_scalars(time);
+
     auto body = make_unique<ModelNode>("Body", Vector3f(0, 0, 0), Vector3f(0, 0, 0), Vector3f(1.2f, 1.0f, 2.0f));
     
-    auto head = body->addChild("Head", Vector3f(0, 0.8f, 1.2f), Vector3f(1.2f, 1, 1), Vector3f(-10, 0, 0));
+    auto head = body->addChild("Head", Vector3f(0, 0.3, 0.7), Vector3f(1.2f, 1, 1), Vector3f(-5 + (h*5), 0, 0), Vector3f(0, 0.5f, 0.5f)); //animated
     auto snout = head->addChild("Snout", Vector3f(0, -0.25f, 0.68f), Vector3f(1.2, 0.5f, 0.36f), Vector3f(0, 0, 0));
 
-    head->addChild("Left ear", Vector3f(0.65f, 0.15f, 0.2f), Vector3f(0.2f, 0.66f, 0.4f), Vector3f(0, 0, 20));
-    head->addChild("Right ear", Vector3f(-0.65f, 0.15f, 0.2f), Vector3f(0.2f, 0.66f, 0.4f), Vector3f(0, 0, -20));
+    auto earL = head->addChild("Left ear", Vector3f(0.55f, 0.4f, 0.2f), Vector3f(0.2f, 0.66f, 0.4f), Vector3f(0, 0, 20 + (e*10)), Vector3f(0.1, -0.33f, 0)); //animated
+    auto earR = head->addChild("Right ear", Vector3f(-0.55f, 0.4f, 0.2f), Vector3f(0.2f, 0.66f, 0.4f), Vector3f(0, 0, -(20 + (e*10))), Vector3f(-0.1, -0.33f, 0)); //animated
     
-    body->addChild("Tail", Vector3f(0, 0.5f, -1.4f), Vector3f(0.3f, 0.3f, 1), Vector3f(20, 0, 0));
+    auto tail = body->addChild("Tail", Vector3f(0, 0.5f, -0.9f), Vector3f(0.3f, 0.3f, 1), Vector3f(20 + (t*5), 0, 0), Vector3f(0, -0.15, -0.5)); //animated
     
-    body->addChild("Front left leg", Vector3f(0.4f, -0.85f, 0.6f), Vector3f(0.4f, 1, 0.4f), Vector3f(25, 0, 0));
-    body->addChild("Front right leg", Vector3f(-0.4f, -0.85f, 0.95f), Vector3f(0.4f, 1, 0.4f), Vector3f(-25, 0, 0));
-    body->addChild("Back left leg", Vector3f(0.4f, -0.85f, -0.6f), Vector3f(0.4f, 1, 0.4f), Vector3f(-25, 0, 0));
-    body->addChild("Back right leg", Vector3f(-0.4f, -0.85f, -0.95f), Vector3f(0.4f, 1, 0.4f), Vector3f(25, 0, 0));
+    auto legFL = body->addChild("Front left leg", Vector3f(0.4f, -0.35f, 0.8f), Vector3f(0.4f, 1, 0.4f), Vector3f(25*l, 0, 0), Vector3f(0, -0.5, 0)); //animated
+    auto legFR = body->addChild("Front right leg", Vector3f(-0.4f, -0.35f, 0.8f), Vector3f(0.4f, 1, 0.4f), Vector3f(-25*l, 0, 0), Vector3f(0, -0.5, 0)); //animated
+    auto legBL = body->addChild("Back left leg", Vector3f(0.4f, -0.35f, -0.8f), Vector3f(0.4f, 1, 0.4f), Vector3f(-25*l, 0, 0), Vector3f(0, -0.5, 0)); //animated
+    auto legBR = body->addChild("Back right leg", Vector3f(-0.4f, -0.35f, -0.8f), Vector3f(0.4f, 1, 0.4f), Vector3f(25*l, 0, 0), Vector3f(0, -0.5, 0)); //animated
 
     return body;
 }

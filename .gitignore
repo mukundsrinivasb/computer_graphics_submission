@@ -1,4 +1,5 @@
 **/build/
+**/model/
 cmake_install.cmake
 *.blend*
 !/**/**/model/

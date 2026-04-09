@@ -22,19 +22,22 @@ struct ModelNode {
     Eigen::Vector3f position;
     Eigen::Vector3f rotation;
     Eigen::Vector3f scale;
+    Eigen::Vector3f pre_position;
 
     std::vector<std::unique_ptr<ModelNode>> children;
 
     ModelNode(const std::string& name,
               const Eigen::Vector3f& pos = Eigen::Vector3f::Zero(),
               const Eigen::Vector3f& rot = Eigen::Vector3f::Zero(),
-              const Eigen::Vector3f& scl = Eigen::Vector3f::Ones())
-        : name(name), position(pos), rotation(rot), scale(scl) {}
+              const Eigen::Vector3f& scl = Eigen::Vector3f::Ones(), 
+              const Eigen::Vector3f& pre_pos = Eigen::Vector3f::Zero())
+        : name(name), position(pos), rotation(rot), scale(scl), pre_position(pre_pos)  {}
 
     ModelNode* addChild(const std::string& name,
                         const Eigen::Vector3f& pos,
                         const Eigen::Vector3f& scl,
-                        const Eigen::Vector3f& rot = Eigen::Vector3f::Zero());
+                        const Eigen::Vector3f& rot = Eigen::Vector3f::Zero(), 
+                        const Eigen::Vector3f& pre_pos = Eigen::Vector3f::Zero());
 };
 
 // Methods 
@@ -58,5 +61,7 @@ void exportOBJ(const std::string& filename,
 
 void printHierarchy(const ModelNode* node, int depth = 0);
 std::unique_ptr<ModelNode> buildAnimalModel();
+static std::tuple<float, float, float, float> scalars_at_time(float time);
+std::unique_ptr<ModelNode> buildAnimalModelAtTime(float time);
 
 #endif
