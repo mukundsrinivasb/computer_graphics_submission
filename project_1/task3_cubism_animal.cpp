@@ -257,7 +257,7 @@ unique_ptr<ModelNode> buildAnimalModel() {
 
 //Render a mesh using OpenGL
 void drawMesh(const Mesh& mesh){
-  glBegin(GL_TRIANGLE);
+  glBegin(GL_TRIANGLES);
   for(const Triangle& t : mesh.faces){
     //Vertices
     const Vector3f& v0 = mesh.vertices[t.v0];
@@ -268,13 +268,13 @@ void drawMesh(const Mesh& mesh){
     const Vector3f& edge2 = v2-v0;
     const Vector3f& normal = edge1.cross(edge2).normalized();
     //Tell OpenGL which way this triangle is facing
+    glNormal3f(normal.x(),normal.y(),normal.z());
     glVertex3f(v0.x(),v0.y(),v0.z());
     glVertex3f(v1.x(),v1.y(),v1.z());
     glVertex3f(v2.x(),v2.y(),v2.z());
-    glNormal(normal.x(),normal.y(),normal.z());
 
   }
-  gelEnd();
+  glEnd();
 
 }
 
@@ -318,14 +318,33 @@ int main() {
 
     if(!glfwInit())
       return -1;
-    GLFWwindow* window = glfwCreateWindow(800,600,"Render Animal",NULL,NULL);
+    GLFWwindow* window = glfwCreateWindow(800,800,"Render Animal",NULL,NULL);
     if(!window){
       glfwTerminate();
       return -1;
     }
 
     glfwMakeContextCurrent(window);
+    glEnable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    gluPerspective(45.0f,1.0f,0.1f,100);
+    glLoadIdentity();
+    gluPerspective(45.0f,1.0,0.1,100.0);
 
-
+    while(!glfwWindowShouldClose(window)){
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      gluLookAt(
+          5.0f,3.0f,5.0f,
+          0.0f,0.0f,0.0f,
+          0.0f,1.0f,0.0f
+          );
+      //Render the animal
+      renderNode(animal.get());
+      glfwSwapBuffers(window);
+      glfwPollEvents();
+    }
+    glfwTerminate();
     return 0;
 }
