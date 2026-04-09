@@ -133,7 +133,7 @@ static std::tuple<float, float, float, float> time_to_scalars(float time){
     float legs = sin(M_PI*time); //scalar for leg cycle
     float head = cos(M_PI*time*2); //scalar for head cycle
     float ears = cos(M_PI*(time-0.1)*2); //scalar for ears cycle
-    float tail = cos(M_PI*time*2); //scalar for tail cycle
+    float tail = -cos(M_PI*time*2); //scalar for tail cycle
 
     return {head, ears, tail, legs};
 }
@@ -146,8 +146,8 @@ unique_ptr<ModelNode> buildAnimalModelAtTime(float time) {
     auto head = body->addChild("Head", Vector3f(0, 0.3, 0.7), Vector3f(1.2f, 1, 1), Vector3f(-5 + (h*5), 0, 0), Vector3f(0, 0.5f, 0.5f)); //animated
     auto snout = head->addChild("Snout", Vector3f(0, -0.25f, 0.68f), Vector3f(1.2, 0.5f, 0.36f), Vector3f(0, 0, 0));
 
-    auto earL = head->addChild("Left ear", Vector3f(0.55f, 0.4f, 0.2f), Vector3f(0.2f, 0.66f, 0.4f), Vector3f(0, 0, 20 + (e*10)), Vector3f(0.1, -0.33f, 0)); //animated
-    auto earR = head->addChild("Right ear", Vector3f(-0.55f, 0.4f, 0.2f), Vector3f(0.2f, 0.66f, 0.4f), Vector3f(0, 0, -(20 + (e*10))), Vector3f(-0.1, -0.33f, 0)); //animated
+    auto earL = head->addChild("Left ear", Vector3f(0.55f, 0.4f, 0.2f), Vector3f(0.2f, 0.66f, 0.4f), Vector3f(0, 0, 20 - (e*10)), Vector3f(0.1, -0.33f, 0)); //animated
+    auto earR = head->addChild("Right ear", Vector3f(-0.55f, 0.4f, 0.2f), Vector3f(0.2f, 0.66f, 0.4f), Vector3f(0, 0, -20 + (e*10)), Vector3f(-0.1, -0.33f, 0)); //animated
     
     auto tail = body->addChild("Tail", Vector3f(0, 0.5f, -0.9f), Vector3f(0.3f, 0.3f, 1), Vector3f(20 + (t*5), 0, 0), Vector3f(0, -0.15, -0.5)); //animated
     
