@@ -42,10 +42,14 @@ int main(int argc, const char **argv) {
         float time = frame/fps; // = frame * 1/fps = frame * (how long (in "seconds") one frame should be on screen for)
         animal = buildAnimalModelAtTime(time);
 
+        // Here is probably where the transformation matrix corresponding to the dog's position according to 
+        // Sam's input handling would be applied
+
         vector<Eigen::Vector3f> allVertices;
         vector<Triangle> allFaces;
         collectMeshes(animal.get(), Eigen::Matrix4f::Identity(), allVertices, allFaces);
 
+        // remove/comment out this last bit when the animation can be visualised in OpenGL directly
         stringstream path;
         path << "../model/cubism_animal_" << frame << ".obj"; //names each .obj file according to its frame number
         exportOBJ(path.str(), allVertices, allFaces);
