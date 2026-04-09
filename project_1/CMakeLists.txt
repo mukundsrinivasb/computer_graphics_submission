@@ -17,7 +17,7 @@ find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 
 # Create the executable (Assuming your file is named task3_cubism_animal.cpp)
-add_executable(task3_cubism_animal task3_cubism_animal.cpp)
+add_executable(task3_cubism_animal task3_cubism_animal.cpp model.cpp render.cpp)
 
 # Link all the libraries to your executable
 target_link_libraries(task3_cubism_animal PRIVATE
