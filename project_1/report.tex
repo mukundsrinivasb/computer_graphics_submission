@@ -1,0 +1,83 @@
+% ACM Conference Format
+\documentclass[sigconf]{acmart}
+
+% --- Essential Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{pdfpages}
+\graphicspath{{./build_latex/}}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+
+% Task Numbering 
+\renewcommand{\thesection}{Task \arabic{section}}
+\renewcommand{\thesubsection}{T\arabic{section}.\arabic{subsection}}
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Syntax Highlighting Colors
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{codeorange}{rgb}{0.8, 0.4, 0.0}
+\definecolor{tealtypes}{rgb}{0.0, 0.5, 0.5} % Added missing color definition
+
+% Code listing format
+\lstset{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\fontsize{7pt}{8pt}\selectfont,
+    breakatwhitespace=false,         
+    breaklines=true,                     
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    frame=single, 
+    emph={rasterize_triangle, set_pixel, computeBarycentric2D, get_index, interpolate, insideTriangle,draw,blinn_phong_fragment_shader,texture_fragment_shader,normal_fragment_shader,Flat,Gouraud,Phong},
+    emphstyle=\color{codeorange}, 
+    morekeywords={Vector3f,fragment_shader_payload, getColor, cwiseProduct, normalized, squaredNorm, dot},
+    keywordstyle=[2]\color{tealtypes},
+}
+
+\begin{document}
+
+%SIGGRAPH Title and Authors
+\title{COMP8610 : Project 1}
+
+\author{All of us}
+\affiliation{%
+  \institution{Australian National University}  
+}
+\email{uid@uni.edu.au}
+
+% 
+\settopmatter{printacmref=false}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\pagestyle{plain}
+
+% The abstract MUST be placed before \maketitle in the acmart class
+\begin{abstract}
+  This is an abstract 
+\end{abstract}
+
+\maketitle
+
+% ==========================================
+% REPORT CONTENT STARTS HERE
+% ==========================================
+
+\section{Introduction}
+Your report text goes here...
+
+\end{document}
