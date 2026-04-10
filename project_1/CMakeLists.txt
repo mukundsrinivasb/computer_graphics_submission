@@ -16,11 +16,11 @@ find_package(OpenGL REQUIRED)
 # but this is the standard cross-platform approach)
 find_package(glfw3 REQUIRED)
 
-# Create the executable (Assuming your file is named task3_cubism_animal.cpp)
-add_executable(task3_cubism_animal task3_cubism_animal.cpp model.cpp model.hpp render.cpp render.hpp)
+# Create the executable (Assuming your file is named mian.cpp)
+add_executable(main main.cpp model.cpp model.hpp render.cpp render.hpp input.cpp input.hpp)
 
 # Link all the libraries to your executable
-target_link_libraries(task3_cubism_animal PRIVATE
+target_link_libraries(main PRIVATE
     Eigen3::Eigen
     OpenGL::GL
     OpenGL::GLU
