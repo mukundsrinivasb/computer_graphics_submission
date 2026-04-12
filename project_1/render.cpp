@@ -8,6 +8,7 @@ using namespace std;
 
 void drawMesh(const Mesh& mesh){
   glBegin(GL_TRIANGLES);
+  glColor3f(0.5f,0.5f,0.5f);
   for(const Triangle& t : mesh.faces){
     const Vector3f& v0 = mesh.vertices[t.v0];
     const Vector3f& v1 = mesh.vertices[t.v1];
