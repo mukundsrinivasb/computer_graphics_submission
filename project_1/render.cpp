@@ -1,5 +1,5 @@
 #include "render.hpp"
-#include <Windows.h>
+// #include <Windows.h>
 #include <GLFW/glfw3.h>
 #include <GL/glu.h>
 
