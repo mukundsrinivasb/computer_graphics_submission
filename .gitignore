@@ -4,4 +4,5 @@ cmake_install.cmake
 **/**/build_latex/
 **/.cache
 **/compile_commands.json
+**/task3_cubism_animal.cpp
 **/*.zip
