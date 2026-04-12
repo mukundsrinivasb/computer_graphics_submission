@@ -34,7 +34,8 @@ void renderNode(const ModelNode* node){
   glRotatef(node->rotation.z(),0.0f,0.0f,1.0f);
   glRotatef(node->rotation.y(),0.0f,1.0f,0.0f);
   glRotatef(node->rotation.x(),1.0f,0.0f,0.0f);
- //.. 
+ //Apply translations with respect to the parent node
+ //For instance , if the current node is connected to the head , move to head and then apply scaling
   glTranslatef(node->pre_position.x(),node->pre_position.y(),node->pre_position.z());
     glPushMatrix();
       glScalef(node->scale.x(),node->scale.y(),node->scale.z());
