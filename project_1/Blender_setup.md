@@ -31,7 +31,21 @@ void renderNode(const ModelNode* node){
 ```
 
 ### Z-buffer
-By enabling depth testing, the graphics pipeline utilizes a Z-buffer to store the depth value of each rendered pixel. During the rasterization phase, incoming fragments are subjected to a depth comparison against the existing buffer values; fragments that are physically occluded by previously drawn geometry are discarded. The depth buffer is cleared alongside the color buffer at the beginning of each frame.
+The graphics pipeline utilizes a Z-buffer to store the depth value of each rendered pixel. This is implemented in `main.cpp` using OpenGLs native support for z-buffer through `glEnable(GL_DEPTH_TEST);`
 
 ### Shading
-to retain the localized color definitions of the animal's distinct body parts while under the influence of the global light source, the color material property was enabled. This instructed the lighting model to factor the current color state into its ambient and diffuse material reflectance calculations.
+The lighting and projection was handled using OpenGLs native support in the `main.cpp`
+
+```
+    //Setting up lighting
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+    GLfloat light_direction[] = {5.0f,10.0f,5.0f,0.0f};
+    glLightfv(GL_LIGHT0,GL_POSITION,light_direction);
+    // Set up the Lens
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45.0f, 1.0f, 0.1f, 100.0f);
+```
+
