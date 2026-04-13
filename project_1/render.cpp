@@ -1,7 +1,5 @@
 #include "render.hpp"
-#include <Windows.h>
 #include <GLFW/glfw3.h>
-#include <GL/glu.h>
 
 using namespace Eigen;
 using namespace std;

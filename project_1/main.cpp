@@ -1,11 +1,9 @@
 #include "model.hpp"
 #include "render.hpp"
 #include "input.hpp"
-#include <Windows.h>
 #include <iostream>
 #include <sstream>
 #include <GLFW/glfw3.h>
-#include <GL/glu.h>
 
 using namespace std;
 
