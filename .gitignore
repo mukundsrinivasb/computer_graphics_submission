@@ -1,9 +1,8 @@
 **/build/
-**/model/
 cmake_install.cmake
 *.blend*
-!/**/**/model/
 **/**/build_latex/
 **/.cache
 **/compile_commands.json
+**/task3_cubism_animal.cpp
 **/*.zip

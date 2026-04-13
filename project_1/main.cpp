@@ -1,6 +1,7 @@
 #include "model.hpp"
 #include "render.hpp"
 #include "input.hpp"
+// #include <Windows.h>
 #include <iostream>
 #include <sstream>
 #include <GLFW/glfw3.h>
@@ -33,11 +34,10 @@ unique_ptr<ModelNode> updateModel(animal_state& state) {
 
 int main(int argc, const char **argv) {
     cout << "========================================" << endl;
-    cout << " Task 3: Cubism Animal" << endl;
     cout << " Hierarchical Modelling" << endl;
     cout << "========================================" << endl << endl;
 
-    // use ./task3_cubism_animal [fps] to generate [fps*2] .obj files - each frame of the 2-"second" walk animation loop
+    // use ./main.cpp [fps] to generate [fps*2] .obj files - each frame of the 2-"second" walk animation loop
     // currently I'm using "second" to just mean "unit of time" - it has nothing to do with actual seconds just yet, that 
     // will be handled when the model can actually animate on the screen rather than just generate a .obj file per frame
     float fps = 1;
@@ -92,8 +92,15 @@ int main(int argc, const char **argv) {
     }
 
     glfwMakeContextCurrent(window);
+    //z-buffer
     glEnable(GL_DEPTH_TEST);
     
+    //Setting up lighting
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+    GLfloat light_direction[] = {5.0f,10.0f,5.0f,0.0f};
+    glLightfv(GL_LIGHT0,GL_POSITION,light_direction);
     // Set up the Lens
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
