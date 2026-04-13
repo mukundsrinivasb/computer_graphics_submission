@@ -7,14 +7,7 @@
 #include <GLFW/glfw3.h>
 
 using namespace std;
-
-float mod (float a, float b) {
-  while (a > b) {
-    a -= b;
-  }
-
-  return a;
-}
+using namespace Eigen;
 
 unique_ptr<ModelNode> updateModel(animal_state& state) {
   float rotationInRadians = state.rotation / 180.0f * 3.1415926535f;
@@ -24,10 +17,12 @@ unique_ptr<ModelNode> updateModel(animal_state& state) {
   // Charlie: here is where I update the frame based on the velocity. Feel free to change the frameSpeed in input.hpp, idk what the correct value would be yet.
   // The value stays in the range [0, 1) (basically 0% to 100% of the way through the animation). Just have your buildAnimalModelAtTime function use this instead
   // of the frame.
-  state.currentFrame = mod(state.currentFrame + state.velocity * state.frameSpeed, 1.0f);
+  state.currentFrame = fmod(state.currentFrame + state.velocity * state.frameSpeed, 1.0f);
   unique_ptr<ModelNode> newModel = buildAnimalModelAtTime(state.currentFrame);
 
   // rotate model here
+  Vector4f rotation = rotationY(rotationInRadians) * Vector4f(newModel.get()->rotation(0), newModel.get()->rotation(1), newModel.get()->rotation(2), 1);
+  newModel.get()->rotation = Vector3f(rotation(0)/rotation(3), rotation(1)/rotation(3), rotation(2)/rotation(3));
 
   return newModel;
 }
