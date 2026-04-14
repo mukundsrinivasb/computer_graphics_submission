@@ -60,8 +60,9 @@ void exportOBJ(const std::string& filename,
                const std::vector<Triangle>& faces);
 
 void printHierarchy(const ModelNode* node, int depth = 0);
-std::unique_ptr<ModelNode> buildAnimalModel();
+
 static std::tuple<float, float, float, float> scalars_at_time(float time);
 std::unique_ptr<ModelNode> buildAnimalModelAtTime(float time);
+std::unique_ptr<ModelNode> buildAnimalModelAtPoint(float point);
 
 #endif

@@ -124,7 +124,9 @@ void printHierarchy(const ModelNode* node, int depth) {
     for (const auto& child : node->children) { printHierarchy(child.get(), depth + 1); }
 }
 
-unique_ptr<ModelNode> buildAnimalModel() {return buildAnimalModelAtTime(0);}
+unique_ptr<ModelNode> buildAnimalModelAtPoint(float point) { // point must be within [0, 1)
+    return buildAnimalModelAtTime(2*point);
+}
 
 // given the amount of time (in seconds) since the start of the animation,
 // give the scalars which will modify the rotations of moving body parts
