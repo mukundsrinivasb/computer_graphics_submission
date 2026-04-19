@@ -7,11 +7,11 @@
 struct animal_state {
     int xPos = 0;
     int yPos = 0;
-    int velocity = 0;
+    float velocity = 0;
     int rotation = 0;
     float currentFrame = 0;
-    const int maxVelocity = 100;
-    const int acceleration = 2;
+    const float maxVelocity = 15;
+    const float acceleration = 0.5f;
     const int rotationSpeed = 2;
     const float frameSpeed = 0.002f;
 };

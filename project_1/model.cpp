@@ -15,6 +15,10 @@ ModelNode* ModelNode::addChild(const string& name,
     return children.back().get();
 }
 
+void ModelNode::setYRotation(float y) {
+        rotation[1] = y;
+}
+
 Matrix4f translationMatrix(const Vector3f& t) {
     Matrix4f M = Matrix4f::Identity();
     M(0, 3) = t.x(); M(1, 3) = t.y(); M(2, 3) = t.z();

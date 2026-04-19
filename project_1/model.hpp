@@ -38,6 +38,8 @@ struct ModelNode {
                         const Eigen::Vector3f& scl,
                         const Eigen::Vector3f& rot = Eigen::Vector3f::Zero(), 
                         const Eigen::Vector3f& pre_pos = Eigen::Vector3f::Zero());
+    
+    void setYRotation(float y);
 };
 
 // Methods 
