@@ -6,6 +6,7 @@
 #include <sstream>
 #include <GL/glu.h>
 #include <GLFW/glfw3.h>
+#include <cmath>
 
 using namespace std;
 using namespace Eigen;
@@ -115,6 +116,8 @@ int main(int argc, const char **argv) {
           0.0f, 1.0f, 0.0f
       );
       
+      // Render the floor
+      drawFloor();
       // Render the animal
       renderNode(animal.get());
       

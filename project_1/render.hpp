@@ -5,5 +5,6 @@
 
 void drawMesh(const Mesh& mesh);
 void renderNode(const ModelNode* node);
+void drawFloor();
 
 #endif

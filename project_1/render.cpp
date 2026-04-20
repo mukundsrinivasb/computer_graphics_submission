@@ -46,3 +46,24 @@ void renderNode(const ModelNode* node){
     }
   glPopMatrix(); // Restoring parent 
 }
+
+//Draw a green colour floor , so that the walking of the dog is a little more obvious. This floor has a grid 
+void drawFloor(){
+  //Defining the grids on the floor
+  glColor3f(0.3f,0.8f,0.3f);
+  glLineWidth(1.0f);
+  glBegin(GL_LINES);
+  //Draw a 100X100 grid
+  float floorHeight = -1.50f;
+  for(float i=-50.0f;i<=50.0f;i+=1.0f){
+    //Lines in the X-Z plane
+    glVertex3f(i,floorHeight,-50.0f);
+    glVertex3f(i,floorHeight,50.0f);
+    //Lines in the X-Y plane
+    glVertex3f(-50.0f,floorHeight,i);
+    glVertex3f(50.0f,floorHeight,i);
+  }
+  glEnd();
+
+
+}
