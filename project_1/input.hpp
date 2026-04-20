@@ -14,6 +14,7 @@ struct animal_state {
     const float acceleration = 0.5f;
     const int rotationSpeed = 2;
     const float frameSpeed = 0.002f;
+    const float walkSpeed = 0.25f;
 };
 
 void handleInput(GLFWwindow *window, animal_state& state);

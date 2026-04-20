@@ -12,17 +12,15 @@ using namespace std;
 using namespace Eigen;
 
 unique_ptr<ModelNode> updateModel(animal_state& state) {
-  // float rotationInRadians = state.rotation / 180.0f * 3.1415926535f;
-  // state.xPos += state.velocity * cosf(rotationInRadians);
-  // state.yPos += state.velocity * sinf(rotationInRadians);
+  float rotationInRadians = state.rotation / 180.0f * 3.1415926535f;
+  state.xPos += state.velocity * sinf(rotationInRadians) * state.walkSpeed;
+  state.yPos += state.velocity * cosf(rotationInRadians) * state.walkSpeed;
 
   // build a new version of the model
   state.currentFrame = fmod(state.currentFrame + state.velocity * state.frameSpeed, 1.0f);
   unique_ptr<ModelNode> newModel = buildAnimalModelAtPoint(state.currentFrame);
 
   // rotate model here
-  // Vector4f rotation = rotationY(rotationInRadians) * Vector4f(newModel.get()->rotation(0), newModel.get()->rotation(1), newModel.get()->rotation(2), 1);
-  // newModel.get()->rotation = Vector3f(rotation(0)/rotation(3), rotation(1)/rotation(3), rotation(2)/rotation(3));
   newModel.get()->setYRotation(state.rotation);
 
   return newModel;
@@ -119,8 +117,8 @@ int main(int argc, const char **argv) {
       float animalPosY = 1.3f;
       float animalPosz = state.yPos;
       gluLookAt(
-         animalPosX + cameraSideOffset, animalPosY + cameraHeight, animalPosz + cameraDistance,
-         animalPosX, animalPosY, animalPosz, 
+         cameraSideOffset, animalPosY + cameraHeight, cameraDistance,
+         0.0f, animalPosY, 0.0f, 
           0.0f, 1.0f, 0.0f
       );
       
