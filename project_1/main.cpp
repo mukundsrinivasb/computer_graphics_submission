@@ -101,6 +101,10 @@ int main(int argc, const char **argv) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(45.0f, 1.0f, 0.1f, 100.0f);
+    float cameraHeight = 3.0f; // y-height
+    float cameraSideOffset = 10.0f; // Offset to the right
+    float cameraDistance = 10.0f;// How far in the lookAt direction (z-axis)
+
 
     while(!glfwWindowShouldClose(window)){
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -110,9 +114,13 @@ int main(int argc, const char **argv) {
       // Set up the Camera
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
+      //Camera follows the dog
+      float animalPosX = state.xPos;
+      float animalPosY = 1.3f;
+      float animalPosz = state.yPos;
       gluLookAt(
-          5.0f, 3.0f, 5.0f,
-          0.0f, 0.0f, 0.0f,
+         animalPosX + cameraSideOffset, animalPosY + cameraHeight, animalPosz + cameraDistance,
+         animalPosX, animalPosY, animalPosz, 
           0.0f, 1.0f, 0.0f
       );
       
