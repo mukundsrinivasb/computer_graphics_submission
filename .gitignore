@@ -6,4 +6,3 @@ cmake_install.cmake
 **/.cache
 **/compile_commands.json
 **/task3_cubism_animal.cpp
-**/*.zip
