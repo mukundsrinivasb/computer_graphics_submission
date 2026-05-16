@@ -132,19 +132,11 @@ bool Material::hasEmission() {
     else return false;
 }
 
+// todo: redo this function
 Vector3f Material::getColorAt(double u, double v) {
     if (!textured) {
         return Vector3f();
     }
-    // auto image_data = cv::imread("../models/cornellbox/checkerboard.png");
-    // cv::cvtColor(image_data, image_data, cv::COLOR_RGB2BGR);
-    // auto width = image_data.cols;
-    // auto height = image_data.rows;
-    // auto u_img = u * width;
-    // auto v_img = (1 - v) * height;
-    // auto color = image_data.at<cv::Vec3b>(v_img, u_img);
-    // return Vector3f(color[0], color[1], color[2]);
-    // std::cout << "u " << u << ", v " << v << "\n";
     return std::fmod((float) u, 0.12f) < 0.06f && std::fmod((float) v, 0.12f) < 0.06f ? Vector3f(200, 200, 200) : Vector3f(0);
 }
 
