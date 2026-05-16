@@ -1,28 +1,36 @@
 cmake_minimum_required(VERSION 3.10)
-project("Project - 1")
+project(RayTracing)
 
-# Force C++14 or higher (Required for make_unique)
+include_directories(/usr/include/eigen3)          # Standard Linux (Ubuntu, etc.)
+include_directories(/usr/local/include/eigen3)    # Intel Mac
+include_directories(/opt/homebrew/include/eigen3) # Apple Silicon Mac (M1/M2/M3)
+
+## Enable C++14
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# 1. Find Eigen3
 find_package(Eigen3 REQUIRED)
+find_package(OpenCV REQUIRED)
 
-# 2. Find OpenGL and GLU
-find_package(OpenGL REQUIRED)
+# OpenMP
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
 
-# 3. Find GLFW
-# (Note: On some Linux distributions, find_package(glfw3) might need pkg_check_modules instead, 
-# but this is the standard cross-platform approach)
-find_package(glfw3 REQUIRED)
+    add_executable(RayTracing main.cpp Object.hpp Vector.cpp Vector.hpp Sphere.hpp global.hpp Triangle.hpp Scene.cpp
+    Scene.hpp BVH.cpp BVH.hpp Bounds3.hpp Ray.hpp Material.hpp Intersection.hpp
+    Renderer.cpp Renderer.hpp)
 
-# Create the executable (Assuming your file is named mian.cpp)
-add_executable(main main.cpp model.cpp model.hpp render.cpp render.hpp input.cpp input.hpp)
+    target_link_libraries(RayTracing PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(RayTracing PRIVATE Eigen3::Eigen ${OpenCV_LIBRARIES})
 
-# Link all the libraries to your executable
-target_link_libraries(main PRIVATE
-    Eigen3::Eigen
-    OpenGL::GL
-    OpenGL::GLU
-    glfw
-)
+    message(STATUS "OpenMP found. Compiling with OpenMP support.")
+
+else()
+    add_executable(RayTracing main.cpp Object.hpp Vector.cpp Vector.hpp Sphere.hpp global.hpp Triangle.hpp Scene.cpp
+    Scene.hpp BVH.cpp BVH.hpp Bounds3.hpp Ray.hpp Material.hpp Intersection.hpp
+    Renderer.cpp Renderer.hpp)
+
+    target_link_libraries(RayTracing PRIVATE Eigen3::Eigen ${OpenCV_LIBRARIES})
+
+    message(STATUS "OpenMP not found. Compiling without OpenMP support.")
+
+endif()
+
