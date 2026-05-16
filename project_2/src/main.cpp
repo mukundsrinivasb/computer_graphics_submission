@@ -19,8 +19,8 @@ int main(int argc, char** argv)
     // change the resolution for quick debugging if rendering is slow
     // Scene scene(64, 64);
     // Scene scene(128, 128);
-    // Scene scene(256, 256); // use this resolution for final rendering
-    Scene scene(512, 512);
+    Scene scene(256, 256); // use this resolution for final rendering
+    // Scene scene(512, 512);
     // Scene scene(768, 768);
     // Scene scene(1024, 1024);
 

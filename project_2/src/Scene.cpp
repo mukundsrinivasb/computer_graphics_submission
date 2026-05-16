@@ -56,12 +56,13 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
     } else if (inter.material->m_type == DIFFUSE ||
            ((inter.material->m_type == GLASS || inter.material->m_type == MIRROR) && TASK_N < 1.3f) || depth > maxDepth) {
 
-        if (TASK_N == 2 && depth <= maxDepth) {
+        if (TASK_N == 2) {
             // TODO: task 2 Monte Carlo Path Tracing with Russian Roulette termination
             if (get_random_float() > RussianRoulette) {
                 return Vector3f(0);
             }
 
+            
             Intersection i = Intersection();
             i.normal = -N;
             Sphere *interSphere = new Sphere(hitPoint, 1.0f, new Material(GLASS, Vector3f(1)));
@@ -75,17 +76,14 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
             auto theta = abs(dotProduct(i.normal.normalized(), -dir));
 
             if (!nextInter.happened || nextInter.material->m_type != EMIT) {
-                Vector3f nextColor = castRay(nextRay, depth + 1)  * theta * 2 * pdf / RussianRoulette;
+                Vector3f nextColor = castRay(nextRay, depth)  * theta * 2 * pdf / RussianRoulette;
                 Vector3f newColor = getIntersectionColor(ray, inter, hitPoint, N, st, dir) + nextColor / 255;
                 // Vector3f newColor = 255 * nextColor * getIntersectionColor(ray, inter, hitPoint, N, st, dir) * inter.material->getColorAt(st.x, st.y) * cos(theta) * (pdf * 2) / RussianRoulette;
-                if (nextColor.x > 255 || nextColor.y > 255 || nextColor.z > 255) {
-                    std::cout << nextColor << std::endl;
-                }
                 
                 return newColor;
             }
 
-            return (nextInter.material->m_emission * inter.material->Kd * cos(theta) * (pdf * 2) / RussianRoulette) / 255 + getIntersectionColor(ray, inter, hitPoint, N, st, dir);
+            return (nextInter.material->m_emission * inter.material->Kd * theta * (pdf * 2) / RussianRoulette) / 255 + getIntersectionColor(ray, inter, hitPoint, N, st, dir);
         }
 
         return getIntersectionColor(ray, inter, hitPoint, N, st, dir);
