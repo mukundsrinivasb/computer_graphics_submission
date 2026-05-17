@@ -10,7 +10,7 @@
 #include "Material.hpp"
 #include "Vector.hpp"
 #ifdef _OPENMP
-    #include <omp.h>
+#include <omp.h>
 #endif
 
 
@@ -27,7 +27,10 @@ void Renderer::Render(const Scene& scene)
 
     float scale = tan(deg2rad(scene.fov * 0.5));
     float imageAspectRatio = scene.width / (float)scene.height;
-    Vector3f eye_pos(278, 273, -800);
+
+    //Anusha: get eye_pos from scene instead of hardcoding it
+    //Anusha: this lets main.cpp control camera position via command line
+    Vector3f eye_pos = scene.eye_pos;
 
     std::cout << "SPP: " << scene.spp << "\n";
 

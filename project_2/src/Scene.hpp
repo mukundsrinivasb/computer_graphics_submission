@@ -1,7 +1,6 @@
 //
 // Created by Göksu Güvendiren on 2019-05-14.
 //
-
 #pragma once
 
 #include <vector>
@@ -12,7 +11,6 @@
 #include "Ray.hpp"
 #include "Sphere.hpp"
 #include "Material.hpp"
-
 
 class Scene
 {
@@ -25,6 +23,9 @@ public:
     int maxDepth = 5;
     float RussianRoulette = 0.8;
 
+    //Anusha: added eye_pos here so main.cpp can set it from command line args
+    //Anusha: default value matches what was hardcoded in Renderer.cpp before
+    Vector3f eye_pos = Vector3f(278, 273, -800);
 
     // change the spp value to change sample ammount
     // int spp = 16;
@@ -75,8 +76,6 @@ public:
         float k = 1 - eta * eta * (1 - cosi * cosi);
         return k < 0 ? 0 : eta * I + (eta * cosi - sqrtf(k)) * n;
     }
-
-
 
     // Compute Fresnel equation
 //
