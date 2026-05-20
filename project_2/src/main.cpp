@@ -21,11 +21,16 @@ int main(int argc, char** argv)
     //float eye_x = 278, eye_y = 273, eye_z = -800;
 
     // Charlie: new camera defaults
-    float eye_x = 0, eye_y = 1, eye_z = -12.9;
+    float eye_x = 0, eye_y = 1, eye_z = -12.9; 
 
     //Anusha: scene defaults
-    int width = 256, height = 256; // Charlie: eventually needs to be 1920:1080 (or something of this ratio - I've been using 480:270)
-    int spp = 64;
+    // int width = 256, height = 256; 
+    // int spp = 64;
+    // float fov = 40;
+
+    // Charlie: new scene defaults
+    int width = 512, height = 512; // Charlie: eventually needs to be 1920:1080 (or something of this ratio - I've been using 480:270)
+    int spp = 16; // change to >64 for final render
     float fov = 40;
 
     //Anusha: read user input from command line if provided
@@ -107,39 +112,43 @@ int main(int argc, char** argv)
     // mfloor->textured=true;
     // scene.Add(new MeshTriangle(verts, vertIndex, 2,st,mfloor));
 
-    // ---------------------- chess scene -------------------------------------------
+    // ---------------------- Charlie: chess scene -------------------------------------------
 
     // Charlie: creating new materials for our scene
-    Material* gold = new Material(DIFF_MIRROR, Vector3f(0.5, 0.3, 0));
-    gold->Kd=0.6;
-    gold->Ks=0.4;
-    gold->specularExponent=64;
-    gold->ior=3; // higher number = more reflection, not refraction? (this is just a note to self)
+    Material* gold = new Material(DIFF_MIRROR, Vector3f(0.5, 0.4, 0)); //working
+    gold->Kd=0.8;
+    gold->Ks=0.2;
+    gold->specularExponent=32;
+    gold->ior=5; // higher number = more reflection, not refraction (this is just a note to self)
 
-    Material* mirror_tile = new Material(DIFF_MIRROR, Vector3f(0.1, 0.1, 0.1));
+    Material* mirror_tile = new Material(DIFF_MIRROR, Vector3f(0.0, 0.0, 0.0)); //working
     mirror_tile->Kd=1;
     mirror_tile->Ks=0;
     mirror_tile->ior=6; 
 
-    Material* diffuse_tile = new Material(DIFF_MIRROR, Vector3f(0.3, 0.3, 0.3));
-    diffuse_tile->Kd=1;
-    diffuse_tile->Ks=0;
-    diffuse_tile->ior=1; 
+    Material* diffuse_tile = new Material(DIFF_MIRROR, Vector3f(0.07, 0.07, 0.07)); // working
+    diffuse_tile->Kd=0.99;
+    diffuse_tile->Ks=0.01;
+    diffuse_tile->ior=1.1; 
 
-    Material* dark_pawn = new Material(DIFF_MIRROR, Vector3f(0.01, 0.01, 0.01));
-    dark_pawn->Kd=0.7;
-    dark_pawn->Ks=0.3;
-    dark_pawn->specularExponent=64;
-    dark_pawn->ior=2; 
+    Material* diffuse_grey = new Material(DIFFUSE, Vector3f(0.07, 0.07, 0.07)); // working
+    diffuse_tile->Kd=0.7;
+    diffuse_tile->Ks=0.3;
 
-    Material* light_pawn = new Material(DIFF_MIRROR, Vector3f(0.8, 0.8, 0.8));
-    light_pawn->Kd=0.6;
-    light_pawn->Ks=0.4;
-    light_pawn->specularExponent=64;
-    light_pawn->ior=4; 
+    Material* dark_pawn = new Material(DIFF_MIRROR, Vector3f(0.00, 0.00, 0.00)); // working
+    dark_pawn->Kd=0.9;
+    dark_pawn->Ks=0.1;
+    dark_pawn->specularExponent=1;
+    dark_pawn->ior=1.1; // 1.1
+
+    Material* light_pawn = new Material(DIFF_MIRROR, Vector3f(0.8, 0.8, 0.8)); // working
+    light_pawn->Kd=0.5; 
+    light_pawn->Ks=0.5;
+    light_pawn->specularExponent=100;
+    light_pawn->ior=8; // 8
 
     MeshTriangle chess_floor("../models/chessScene/floor.obj", 0, diffuse_tile); // floor material wrong for now
-    MeshTriangle back_wall("../models/chessScene/back_wall.obj", Vector3f(0, 0, 0), diffuse_tile);
+    MeshTriangle back_wall("../models/chessScene/back_wall.obj", Vector3f(0, 0, 0), diffuse_grey);
 
     MeshTriangle king("../models/chessScene/king_piece.obj", Vector3f(0, 0, 7), gold);
 
@@ -179,20 +188,17 @@ int main(int argc, char** argv)
     scene.Add(&dark_pawn_6);
     scene.Add(&dark_pawn_7);
    
-    // adding lights - I'm not finished fiddling with these yet 
     Material* light = new Material(EMIT, Vector3f(1));
-    light->m_emission=100;
+    light->m_emission=60; 
 
     Material* dim_light = new Material(EMIT, Vector3f(1));
     dim_light->m_emission=30;
 
-    MeshTriangle light_("../models/chessScene/light.obj",Vector3f(0,-5,0), light);
-    MeshTriangle light_back("../models/chessScene/light.obj", Vector3f(0, -5, -500), dim_light);
-    MeshTriangle light_front("../models/chessScene/light_front.obj", Vector3f(0, 0, 14), light);
+    MeshTriangle light_behind("../models/chessScene/light.obj", Vector3f(0, 15, -20), dim_light); 
+    MeshTriangle light_("../models/chessScene/light.obj", Vector3f(0, 0, 8), light); // working! 
 
-    scene.Add(&light_front);
     scene.Add(&light_);
-    scene.Add(&light_back);
+    scene.Add(&light_behind);
     
 
     // -----------------------------------------------------------------------
