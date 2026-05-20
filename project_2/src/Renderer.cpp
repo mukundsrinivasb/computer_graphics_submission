@@ -55,6 +55,10 @@ void Renderer::Render(const Scene& scene)
                     Vector3f pixel_color = scene.castRayBidirectional(r, 0);
                     total += pixel_color;
                 }
+
+                // if (dotProduct(total / scene.spp, Vector3f(1, 1, 1)) < 0.1) {
+                //     std::cout << total / scene.spp << "\n";
+                // }
                 
                 framebuffer[framebuffer.size() - 1 - m] = total / scene.spp;
             }
