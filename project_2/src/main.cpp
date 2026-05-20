@@ -16,17 +16,49 @@ int main(int argc, char** argv)
 {
     if (argc>=2)
         TASK_N=(float)atof(argv[1]);
+
+    //Anusha: camera defaults - matches what was hardcoded in Renderer.cpp
+    float eye_x = 278, eye_y = 273, eye_z = -800;
+
+    //Anusha: scene defaults
+    int width = 256, height = 256;
+    int spp = 64;
+    float fov = 40;
+
+    //Anusha: read user input from command line if provided
+    //Anusha: usage: ./RayTracing <task> <eye_x> <eye_y> <eye_z> <width> <height> <spp> <fov>
+    //Anusha: e.g:   ./RayTracing 2 278 273 -800 256 256 64 40
+    if (argc >= 5) {
+        eye_x = atof(argv[2]);
+        eye_y = atof(argv[3]);
+        eye_z = atof(argv[4]);
+    }
+    if (argc >= 7) {
+        width  = atoi(argv[5]);
+        height = atoi(argv[6]);
+    }
+    if (argc >= 8) spp = atoi(argv[7]);
+    if (argc >= 9) fov = atof(argv[8]);
+
+    //Anusha: print settings so its easy to verify before waiting for the render
+    printf("Camera: (%.1f, %.1f, %.1f)  Resolution: %dx%d  SPP: %d  FOV: %.1f\n",
+           eye_x, eye_y, eye_z, width, height, spp, fov);
+
     // change the resolution for quick debugging if rendering is slow
     // Scene scene(64, 64);
-    Scene scene(128, 128);
-    // Scene scene(256, 256); // use this resolution for final rendering
+    // Scene scene(128, 128);
+    Scene scene(width, height); // use this resolution for final rendering
     // Scene scene(512, 512);
     // Scene scene(768, 768);
     // Scene scene(1024, 1024);
 
     scene.RussianRoulette = 0.8;
-    scene.spp = 16;
+    scene.spp = spp;
+    scene.fov = fov;
     // scene.spp = 1;  // use 1 sample per pixel for quick debugging, use 64 for final rendering
+
+    //Anusha: pass camera position into scene so Renderer.cpp can use it
+    scene.eye_pos = Vector3f(eye_x, eye_y, eye_z);
 
     Material* pink = new Material(DIFFUSE, Vector3f(0.75f, 0.42f, 0.42f));
     Material* blue = new Material(DIFFUSE, Vector3f(0.50f, 0.45f, 0.70f));
