@@ -18,14 +18,14 @@ int main(int argc, char** argv)
         TASK_N=(float)atof(argv[1]);
     // change the resolution for quick debugging if rendering is slow
     // Scene scene(64, 64);
-    // Scene scene(128, 128);
-    Scene scene(256, 256); // use this resolution for final rendering
+    Scene scene(128, 128);
+    // Scene scene(256, 256); // use this resolution for final rendering
     // Scene scene(512, 512);
     // Scene scene(768, 768);
     // Scene scene(1024, 1024);
 
     scene.RussianRoulette = 0.8;
-    scene.spp = 64;
+    scene.spp = 16;
     // scene.spp = 1;  // use 1 sample per pixel for quick debugging, use 64 for final rendering
 
     Material* pink = new Material(DIFFUSE, Vector3f(0.75f, 0.42f, 0.42f));

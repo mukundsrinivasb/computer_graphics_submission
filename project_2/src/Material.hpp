@@ -109,7 +109,7 @@ public:
     // given a ray, calculate the PdF of this ray
     inline float pdf(const Vector3f &wi, const Vector3f &wo, const Vector3f &N);
     // given a ray direction and normal, calculate the contribution of this ray
-    inline Vector3f eval(const Vector3f &dir, const Vector3f &N);
+    inline Vector3f eval(const Vector3f &dir, const Vector3f &N, const Vector3f &albedo);
 
 };
 
@@ -134,10 +134,7 @@ bool Material::hasEmission() {
 
 // todo: redo this function
 Vector3f Material::getColorAt(double u, double v) {
-    if (!textured) {
-        return Vector3f();
-    }
-    return std::fmod((float) u, 0.12f) < 0.06f && std::fmod((float) v, 0.12f) < 0.06f ? Vector3f(200, 200, 200) : Vector3f(0);
+    return Vector3f(0.5f, 0.5f, 0.5f);
 }
 
 
@@ -174,7 +171,7 @@ float Material::pdf(const Vector3f &wi, const Vector3f &wo, const Vector3f &N){
     }
 }
 
-Vector3f Material::eval(const Vector3f &dir, const Vector3f &N){
+Vector3f Material::eval(const Vector3f &dir, const Vector3f &N, const Vector3f &albedo){
     switch(m_type){
         default:
         {

@@ -39,6 +39,8 @@ public:
     Intersection intersect(const Ray& ray) const;
     BVHAccel *bvh;
     void buildBVH();
+    Vector3f getRandomDirection(Vector3f hitPoint, Vector3f N, float &pdf) const;
+    Vector3f castRayBidirectional(const Ray &ray, int depth) const;
     Vector3f castRay(const Ray &ray, int depth) const;
     Vector3f getIntersectionColor(const Ray &ray, const Intersection &inter, Vector3f hitPoint, Vector3f N, Vector2f st, Vector3f dir) const;
     void sampleLight(Intersection &pos, float &pdf) const;

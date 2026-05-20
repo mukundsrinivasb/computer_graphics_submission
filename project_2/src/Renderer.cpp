@@ -41,7 +41,7 @@ void Renderer::Render(const Scene& scene)
             if(scene.spp==1){
                 // TODO: task 1.1 pixel projection
                 Ray r = Ray(eye_pos, Vector3f((((float) i + 0.5f) / scene.height * 2 - 1) * scale, (((float) j + 0.5f) / scene.width * 2 - 1) * scale, 1));
-                Vector3f pixel_color = scene.castRay(r, 0);
+                Vector3f pixel_color = scene.castRayBidirectional(r, 0);
                 framebuffer[framebuffer.size() - 1 - m] = pixel_color;
             }else {
                 // TODO: task 2 multi-sampling (anti-aliasing)
@@ -49,7 +49,10 @@ void Renderer::Render(const Scene& scene)
                 for (int n = 0; n < scene.spp; n++) {
                     Ray r = Ray(eye_pos, Vector3f((((float) i + (get_random_float())) / scene.height * 2 - 1) * scale, 
                         (((float) j + (get_random_float())) / scene.width * 2 - 1) * scale, 1));
-                    Vector3f pixel_color = scene.castRay(r, 0);
+                    Vector3f pixel_color = scene.castRayBidirectional(r, 0);
+                    if (pixel_color.x < 0 || pixel_color.y < 0 || pixel_color.z < 0 || pixel_color.x >= 0.8 || pixel_color.y >= 0.8 || pixel_color.z >= 0.9) {
+                        std::cout << pixel_color << "\n";
+                    }
                     total += pixel_color;
                 }
                 
