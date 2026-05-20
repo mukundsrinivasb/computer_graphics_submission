@@ -356,6 +356,24 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
         Vector3f reflectionDirection = reflect(ray.direction,N).normalized();
         Ray reflectionRay(hitPoint + N*EPSILON,reflectionDirection);
         hitColor = castRay(reflectionRay,depth+1) * inter.material->m_color;
+
+    } else if (inter.material->m_type == DIFF_MIRROR && TASK_N >= 1.3f) {  // Charlie: if the object is reflective but has its own colour
+        // Charlie: this is adapted from this version of the glass implementation
+        Vector3f phong_color = inter.material->getColor(); // TODO: please replace this with however you would calculate this intersection's colour if it was diffuse
+
+        float kr = fresnel(ray.direction, N, inter.material->ior);
+        if(kr<1){
+            Vector3f reflectionDirection = reflect(ray.direction,N).normalized();
+            Ray reflectionRay(hitPoint + N*EPSILON,reflectionDirection);
+            Vector3f color_reflection = castRay(reflectionRay,depth+1) * inter.material->m_color;
+            //Law of conservation of energy
+            hitColor = phong_color*kr + color_reflection*(1-kr);
+        }
+        else{
+            Vector3f reflectionDirection = reflect(ray.direction,N).normalized();
+            Ray reflectionRay(hitPoint + N*EPSILON,reflectionDirection);
+            hitColor = castRay(reflectionRay,depth+1) * inter.material->m_color;
+        }
     }
 
     return hitColor;

@@ -8,7 +8,7 @@
 #include "Vector.hpp"
 #include <opencv2/opencv.hpp>
 
-enum MaterialType { DIFFUSE, GLASS, MIRROR, EMIT};
+enum MaterialType { DIFFUSE, GLASS, MIRROR, EMIT, DIFF_MIRROR };
 
 class Material{
 private:

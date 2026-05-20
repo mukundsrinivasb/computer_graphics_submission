@@ -18,11 +18,14 @@ int main(int argc, char** argv)
         TASK_N=(float)atof(argv[1]);
 
     //Anusha: camera defaults - matches what was hardcoded in Renderer.cpp
-    float eye_x = 278, eye_y = 273, eye_z = -800;
+    //float eye_x = 278, eye_y = 273, eye_z = -800;
+
+    // Charlie: new camera defaults
+    float eye_x = 0, eye_y = 1, eye_z = -12.9;
 
     //Anusha: scene defaults
-    int width = 256, height = 256;
-    int spp = 2048;
+    int width = 256, height = 256; // Charlie: eventually needs to be 1920:1080 (or something of this ratio - I've been using 480:270)
+    int spp = 64;
     float fov = 40;
 
     //Anusha: read user input from command line if provided
@@ -60,42 +63,139 @@ int main(int argc, char** argv)
     //Anusha: pass camera position into scene so Renderer.cpp can use it
     scene.eye_pos = Vector3f(eye_x, eye_y, eye_z);
 
-    Material* pink = new Material(DIFFUSE, Vector3f(0.75f, 0.42f, 0.42f));
-    Material* blue = new Material(DIFFUSE, Vector3f(0.50f, 0.45f, 0.70f));
-    Material* purple = new Material(DIFFUSE, Vector3f(0.73f, 0.33f, 0.83f));
-    Material* green = new Material(DIFFUSE, Vector3f(0.35f, 0.85f, 0.35f));
-    Material* white = new Material(DIFFUSE, Vector3f(0.48f, 0.45f, 0.4f));
+
+    // Charlie: I'm just commenting this out for now just in case anyone still wants it for testing
+    // Charlie: feel free to remove it at any time, or I'll remove it before submitting
+
+    // ---------------------- Cornell box scene -------------------------------------------
+
+    // Material* pink = new Material(DIFFUSE, Vector3f(0.75f, 0.42f, 0.42f));
+    // Material* blue = new Material(DIFFUSE, Vector3f(0.50f, 0.45f, 0.70f));
+    // Material* purple = new Material(DIFFUSE, Vector3f(0.73f, 0.33f, 0.83f));
+    // Material* green = new Material(DIFFUSE, Vector3f(0.35f, 0.85f, 0.35f));
+    // Material* white = new Material(DIFFUSE, Vector3f(0.48f, 0.45f, 0.4f));
+    // Material* light = new Material(EMIT, Vector3f(1));
+    // light->m_emission=100;
+
+    // MeshTriangle floor("../models/cornellbox/floor.obj", Vector3f(0), white);
+    // MeshTriangle shortbox("../models/cornellbox/shortbox.obj",Vector3f(0), green);
+    // MeshTriangle tallbox("../models/cornellbox/tallbox.obj", Vector3f(0), new Material(MIRROR, Vector3f(1))); 
+    // MeshTriangle left("../models/cornellbox/left.obj", Vector3f(0), pink);
+    // MeshTriangle right("../models/cornellbox/right.obj",Vector3f(0),  blue);
+    // MeshTriangle light_("../models/cornellbox/light.obj",Vector3f(0,-5,0), light);
+    // MeshTriangle light_back("../models/cornellbox/light.obj", Vector3f(0, -5, -500), light);
+
+    // commented out to test chess scene
+    // scene.Add(&floor);
+    // scene.Add(&shortbox);
+    // scene.Add(&tallbox);
+    // scene.Add(&left);
+    // scene.Add(&right);
+    // scene.Add(&light_);
+    // scene.Add(&light_back);
+
+    // scene.Add(new MeshTriangle("../models/spot/spot.obj", Vector3f(0),
+    //                 new Material(GLASS, Vector3f(1)))); 
+
+    // scene.Add(new Sphere(Vector3f(450,60,100), 60,
+    //                 new Material(GLASS, Vector3f(1))));
+
+    // Vector3f verts[4] = {{0,0,0}, {552.8,0,0}, {549.6, 0,559.2}, {0,0,559.2}};
+    // Vector2f st[4] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+    // uint32_t vertIndex[6] = {0, 2, 1, 2,0,3};
+    // Material* mfloor=new Material(DIFFUSE, Vector3f(0));
+    // mfloor->textured=true;
+    // scene.Add(new MeshTriangle(verts, vertIndex, 2,st,mfloor));
+
+    // ---------------------- chess scene -------------------------------------------
+
+    // Charlie: creating new materials for our scene
+    Material* gold = new Material(DIFF_MIRROR, Vector3f(0.5, 0.3, 0));
+    gold->Kd=0.6;
+    gold->Ks=0.4;
+    gold->specularExponent=64;
+    gold->ior=3; // higher number = more reflection, not refraction? (this is just a note to self)
+
+    Material* mirror_tile = new Material(DIFF_MIRROR, Vector3f(0.1, 0.1, 0.1));
+    mirror_tile->Kd=1;
+    mirror_tile->Ks=0;
+    mirror_tile->ior=6; 
+
+    Material* diffuse_tile = new Material(DIFF_MIRROR, Vector3f(0.3, 0.3, 0.3));
+    diffuse_tile->Kd=1;
+    diffuse_tile->Ks=0;
+    diffuse_tile->ior=1; 
+
+    Material* dark_pawn = new Material(DIFF_MIRROR, Vector3f(0.01, 0.01, 0.01));
+    dark_pawn->Kd=0.7;
+    dark_pawn->Ks=0.3;
+    dark_pawn->specularExponent=64;
+    dark_pawn->ior=2; 
+
+    Material* light_pawn = new Material(DIFF_MIRROR, Vector3f(0.8, 0.8, 0.8));
+    light_pawn->Kd=0.6;
+    light_pawn->Ks=0.4;
+    light_pawn->specularExponent=64;
+    light_pawn->ior=4; 
+
+    MeshTriangle chess_floor("../models/chessScene/floor.obj", 0, diffuse_tile); // floor material wrong for now
+    MeshTriangle back_wall("../models/chessScene/back_wall.obj", Vector3f(0, 0, 0), diffuse_tile);
+
+    MeshTriangle king("../models/chessScene/king_piece.obj", Vector3f(0, 0, 7), gold);
+
+    // pawns on the left (light) - numbered for how close they are to the king (1 = closest)
+    MeshTriangle light_pawn_1("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, 5), light_pawn);
+    MeshTriangle light_pawn_2("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, 3), light_pawn);
+    MeshTriangle light_pawn_3("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, 1), light_pawn);
+    MeshTriangle light_pawn_4("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, -1), light_pawn);
+    MeshTriangle light_pawn_5("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, -3), light_pawn);
+    MeshTriangle light_pawn_6("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, -5), light_pawn);
+    MeshTriangle light_pawn_7("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, -7), light_pawn);
+
+    // pawns on the right (dark) - numbered for how close they are to the king (1 = closest)
+    MeshTriangle dark_pawn_1("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, 5), dark_pawn);
+    MeshTriangle dark_pawn_2("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, 3), dark_pawn);
+    MeshTriangle dark_pawn_3("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, 1), dark_pawn);
+    MeshTriangle dark_pawn_4("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, -1), dark_pawn);
+    MeshTriangle dark_pawn_5("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, -3), dark_pawn);
+    MeshTriangle dark_pawn_6("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, -5), dark_pawn);
+    MeshTriangle dark_pawn_7("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, -7), dark_pawn);
+
+    scene.Add(&chess_floor);
+    scene.Add(&back_wall);
+    scene.Add(&king);
+    scene.Add(&light_pawn_1);
+    scene.Add(&light_pawn_2);
+    scene.Add(&light_pawn_3);
+    scene.Add(&light_pawn_4);
+    scene.Add(&light_pawn_5);
+    scene.Add(&light_pawn_6);
+    scene.Add(&light_pawn_7);
+    scene.Add(&dark_pawn_1);
+    scene.Add(&dark_pawn_2);
+    scene.Add(&dark_pawn_3);
+    scene.Add(&dark_pawn_4);
+    scene.Add(&dark_pawn_5);
+    scene.Add(&dark_pawn_6);
+    scene.Add(&dark_pawn_7);
+   
+    // adding lights - I'm not finished fiddling with these yet 
     Material* light = new Material(EMIT, Vector3f(1));
     light->m_emission=100;
 
-    MeshTriangle floor("../models/cornellbox/floor.obj", Vector3f(0), white);
-    MeshTriangle shortbox("../models/cornellbox/shortbox.obj",Vector3f(0), green);
-    MeshTriangle tallbox("../models/cornellbox/tallbox.obj", Vector3f(0), new Material(MIRROR, Vector3f(1)));
-    MeshTriangle left("../models/cornellbox/left.obj", Vector3f(0), pink);
-    MeshTriangle right("../models/cornellbox/right.obj",Vector3f(0),  blue);
-    MeshTriangle light_("../models/cornellbox/light.obj",Vector3f(0,-5,0), light);
-    MeshTriangle light_back("../models/cornellbox/light.obj", Vector3f(0, -5, -500), light);
+    Material* dim_light = new Material(EMIT, Vector3f(1));
+    dim_light->m_emission=30;
 
-    scene.Add(&floor);
-    scene.Add(&shortbox);
-    scene.Add(&tallbox);
-    scene.Add(&left);
-    scene.Add(&right);
+    MeshTriangle light_("../models/chessScene/light.obj",Vector3f(0,-5,0), light);
+    MeshTriangle light_back("../models/chessScene/light.obj", Vector3f(0, -5, -500), dim_light);
+    MeshTriangle light_front("../models/chessScene/light_front.obj", Vector3f(0, 0, 14), light);
+
+    scene.Add(&light_front);
     scene.Add(&light_);
     scene.Add(&light_back);
+    
 
-    scene.Add(new MeshTriangle("../models/spot/spot.obj", Vector3f(0),
-                    new Material(GLASS, Vector3f(1))));
-
-    scene.Add(new Sphere(Vector3f(450,60,100), 60,
-                         new Material(GLASS, Vector3f(1))));
-
-    Vector3f verts[4] = {{0,0,0}, {552.8,0,0}, {549.6, 0,559.2}, {0,0,559.2}};
-    Vector2f st[4] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
-    uint32_t vertIndex[6] = {0, 2, 1, 2,0,3};
-    Material* mfloor=new Material(DIFFUSE, Vector3f(0));
-    mfloor->textured=true;
-    scene.Add(new MeshTriangle(verts, vertIndex, 2,st,mfloor));
+    // -----------------------------------------------------------------------
 
     scene.buildBVH();
 
