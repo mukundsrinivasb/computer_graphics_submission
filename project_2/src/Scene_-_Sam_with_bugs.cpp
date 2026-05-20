@@ -38,18 +38,6 @@ void Scene::sampleLight(Intersection &pos, float &pdf) const
     }
 }
 
-Vector3f Scene::getRandomDirection(Vector3f hitPoint, Vector3f N, float &pdf) const {
-    Intersection i = Intersection();
-    i.normal = -N;
-    Sphere *interSphere = new Sphere(hitPoint, 1.0f, new Material(GLASS, Vector3f(1)));
-
-    while (dotProduct(i.normal, N) < 0) {
-        interSphere->Sample(i, pdf);
-    }
-
-    return i.coords;
-}
-
 Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
     Vector3f hitColor = Vector3f(0);
     auto inter = intersect(ray);  // find the cloest intersection of the ray and the objects
@@ -108,7 +96,8 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
             w_s[i + 1] = w_;
             cameraInters[i + 1] = inter;
             inter = intersect(Ray(inter.coords + N*EPSILON, w_));
-            while (depth >= 0 && inter.happened && (inter.material->m_type == MIRROR || inter.material->m_type == GLASS)) {
+            //todo: update to work with semi-transparent
+            while (depth <= maxDepth && inter.happened && (inter.material->m_type == MIRROR || inter.material->m_type == GLASS)) {
                 float kr = fresnel(w_, inter.normal, inter.material->ior);
                 if (inter.material->m_type == MIRROR || get_random_float() > kr || kr > 1) {
                     w_ = reflect(w_, inter.normal);
@@ -120,10 +109,11 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
                     Vector3f refractionRayOrigin = (dotProduct(w_,N)<0) ? inter.coords - inter.normal*EPSILON : inter.coords + inter.normal*EPSILON;
                     inter = intersect(Ray(refractionRayOrigin, w_));
                 }
-                depth--;
+                depth++;
             }
             if (!inter.happened) {
-                numRaysFromCamera = i;
+                numRaysFromCamera = i + 1;
+                // std::cout << i + 1 << "\n";
             }
         }
     }
@@ -154,12 +144,13 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
 
         if (inter.obj != nullptr){
             albedo = inter.obj->evalDiffuseColor(st);
+            f = inter.material->eval(w_,N,albedo);
         }
         else {
-            albedo = Vector3f(0.5, 0.5, 0.5);
+            f = Vector3f(0.156,0.25,0.268);
         }
         
-        f = inter.material->eval(w_,N,albedo);
+        
 
         if(pdf<EPSILON)
             numRaysFromLight = i;
@@ -171,7 +162,7 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
         w_s[totalRaysFromCamera + i] = w_;
         lightInters[i] = inter;
         inter = intersect(Ray(inter.coords + N*EPSILON, w_));
-        while (depth >= 0 && inter.happened && (inter.material->m_type == MIRROR || inter.material->m_type == GLASS)) {
+        while (depth <= maxDepth && inter.happened && (inter.material->m_type == MIRROR || inter.material->m_type == GLASS)) {
             float kr = fresnel(w_, inter.normal, inter.material->ior);
             if (inter.material->m_type == MIRROR || get_random_float() > kr || kr > 1) {
                 w_ = reflect(w_, inter.normal);
@@ -183,10 +174,11 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
                 Vector3f refractionRayOrigin = (dotProduct(w_,N)<0) ? inter.coords - inter.normal*EPSILON : inter.coords + inter.normal*EPSILON;
                 inter = intersect(Ray(refractionRayOrigin, w_));
             }
-            depth--;
+            depth++;
         }
         if (!inter.happened) {
-            numRaysFromLight = i;
+            numRaysFromLight = i + 1;
+            // std::cout << i << "\n";
         }
     }
 
@@ -210,13 +202,21 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
                     color = le + cameraColors[k] * color;
                 }
 
+                if (color.x == 0 && color.y == 0 && color.z == 0) {
+                    std::cout << color << "\n";
+                }
+
                 hitColor += color;
             }
         }
     }
 
-    // if (hitColor.x < 0 || hitColor.y < 0 || hitColor.z < 0 || hitColor.x >= 1 || hitColor.y >= 1 || hitColor.z >= 1) {
+    // if (hitColor.x <= 0 || hitColor.y <= 0 || hitColor.z <= 0 || hitColor.x >= 1 || hitColor.y >= 1 || hitColor.z >= 1) {
     //     std::cout << hitColor << "\n";
+    // }
+
+    // if (hitColor.x == 0 && hitColor.y == 0 && hitColor.z == 0) {
+    //     std::cout << numRaysFromCamera << ", " << numRaysFromLight << "\n";
     // }
 
     return hitColor;
@@ -378,46 +378,4 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
 
     return hitColor;
     // return inter.material->m_color;
-}
-
-
-Vector3f Scene::getIntersectionColor(const Ray &ray, const Intersection &inter, Vector3f hitPoint, Vector3f N, Vector2f st, Vector3f dir) const {
-    Vector3f diffuseColor = 0, specularColor = 0;
-    int light_sample=4;  // the number of samples on the area light
-            
-    for (int i = 0; i < light_sample; ++i) {
-        // TODO: task 1.1 Basic ray tracing (Whitted style) with area light sampling
-        // sample area light, basic shading, compute Phong illumination model
-        Intersection interLight = Intersection();
-        float pdf;
-        sampleLight(interLight, pdf);
-        Vector3f origin = hitPoint + N.normalized() * EPSILON;
-        Vector3f target = interLight.coords;
-                        
-        Ray r = Ray(origin, target - origin);
-        auto rayInter = intersect(r);
-
-        // Check if a ray from the object to the light ends at the light
-        if (!rayInter.happened || !interLight.happened || rayInter.obj->getArea() != interLight.obj->getArea() / 2) {
-            // std::cout << rayInter.obj->getArea() << ", " << interLight.obj->getArea() << "\n\n\n";
-            continue;
-        }
-
-        auto v = ray.direction_inv.normalized();
-        auto l = r.direction.normalized();
-
-        // Otherwise, can add color
-        Vector3f material_color;
-        if (inter.material->textured) {
-            material_color = inter.material->getColorAt(st.x, st.y);
-        }
-        else {
-            material_color = inter.material->m_color;
-        }
-        specularColor += interLight.material->getEmission() * inter.material->Ks * dotProduct(v, v - 2 * dotProduct(v, inter.normal.normalized()) * inter.normal.normalized());
-        diffuseColor += interLight.material->m_emission * inter.material->Kd * material_color * dotProduct(inter.normal.normalized(), l);
-    }
-
-    Vector3f hitColor = (diffuseColor + specularColor) / 255;
-    return hitColor;
 }
