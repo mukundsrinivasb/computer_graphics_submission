@@ -108,7 +108,8 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
             w_s[i + 1] = w_;
             cameraInters[i + 1] = inter;
             inter = intersect(Ray(inter.coords + N*EPSILON, w_));
-            while (depth >= 0 && inter.happened && (inter.material->m_type == MIRROR || inter.material->m_type == GLASS)) {
+            //todo: update to work with semi-transparent
+            while (depth <= maxDepth && inter.happened && (inter.material->m_type == MIRROR || inter.material->m_type == GLASS)) {
                 float kr = fresnel(w_, inter.normal, inter.material->ior);
                 if (inter.material->m_type == MIRROR || get_random_float() > kr || kr > 1) {
                     w_ = reflect(w_, inter.normal);
@@ -120,7 +121,7 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
                     Vector3f refractionRayOrigin = (dotProduct(w_,N)<0) ? inter.coords - inter.normal*EPSILON : inter.coords + inter.normal*EPSILON;
                     inter = intersect(Ray(refractionRayOrigin, w_));
                 }
-                depth--;
+                depth++;
             }
             if (!inter.happened) {
                 numRaysFromCamera = i;
@@ -171,7 +172,7 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
         w_s[totalRaysFromCamera + i] = w_;
         lightInters[i] = inter;
         inter = intersect(Ray(inter.coords + N*EPSILON, w_));
-        while (depth >= 0 && inter.happened && (inter.material->m_type == MIRROR || inter.material->m_type == GLASS)) {
+        while (depth <= maxDepth && inter.happened && (inter.material->m_type == MIRROR || inter.material->m_type == GLASS)) {
             float kr = fresnel(w_, inter.normal, inter.material->ior);
             if (inter.material->m_type == MIRROR || get_random_float() > kr || kr > 1) {
                 w_ = reflect(w_, inter.normal);
@@ -183,7 +184,7 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
                 Vector3f refractionRayOrigin = (dotProduct(w_,N)<0) ? inter.coords - inter.normal*EPSILON : inter.coords + inter.normal*EPSILON;
                 inter = intersect(Ray(refractionRayOrigin, w_));
             }
-            depth--;
+            depth++;
         }
         if (!inter.happened) {
             numRaysFromLight = i;
