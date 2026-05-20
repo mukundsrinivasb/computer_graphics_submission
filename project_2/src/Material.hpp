@@ -178,8 +178,8 @@ Vector3f Material::eval(const Vector3f &dir, const Vector3f &N, const Vector3f &
             // calculate the contribution of diffuse   model
             float cosalpha = dotProduct(N, dir);
             if (cosalpha > 0.0f) {
-                Vector3f diffuse = Kd / M_PI;
-                std::cout << diffuse << "\n";
+                Vector3f diffuse = (albedo*Kd) / M_PI;
+                // Vector3f diffuse = Vector3f(0.8f,0.2f,0.8f) / M_PI;
                 return diffuse;
             }
             else

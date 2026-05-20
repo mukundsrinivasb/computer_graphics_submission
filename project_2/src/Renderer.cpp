@@ -53,9 +53,6 @@ void Renderer::Render(const Scene& scene)
                     Ray r = Ray(eye_pos, Vector3f((((float) i + (get_random_float())) / scene.height * 2 - 1) * scale, 
                         (((float) j + (get_random_float())) / scene.width * 2 - 1) * scale, 1));
                     Vector3f pixel_color = scene.castRayBidirectional(r, 0);
-                    if (pixel_color.x < 0 || pixel_color.y < 0 || pixel_color.z < 0 || pixel_color.x >= 0.8 || pixel_color.y >= 0.8 || pixel_color.z >= 0.9) {
-                        std::cout << pixel_color << "\n";
-                    }
                     total += pixel_color;
                 }
                 

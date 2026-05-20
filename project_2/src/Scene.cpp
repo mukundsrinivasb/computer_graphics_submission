@@ -56,7 +56,7 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
     if (!inter.happened)return backgroundColor;  // if no intersection, return background color
 
     Vector3f hitPoint = inter.coords;  // the intersection point
-    Vector3f N = inter.normal; // normal
+    Vector3f N = inter.normal.normalized(); // normal
     Vector2f st = inter.tcoords; // texture coordinates (u, v)
     Vector3f dir = ray.direction;  // ray direction
 
@@ -76,115 +76,121 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
 
     Intersection lightInters[numRaysFromLight];
     Intersection cameraInters[numRaysFromCamera];
-    Vector3f inverseDirections[numRaysFromCamera + numRaysFromLight];
+    Vector3f w_s[numRaysFromCamera + numRaysFromLight];
     int totalRaysFromCamera = numRaysFromCamera;
     cameraInters[0] = inter;
-    inverseDirections[0] = ray.direction_inv;
-
-    Ray currentRay = ray;
-    float pdf;
-
-    // Still need to implement glass and mirrors
-    for (int i = 1; i < numRaysFromCamera; i++) {
-        Vector3f direction = getRandomDirection(hitPoint, N, pdf);
-        inverseDirections[i] = direction;
-        Intersection nextInter = intersect(Ray(hitPoint + N * EPSILON, direction));
-        if (!nextInter.happened) {
-            numRaysFromCamera = i - 1;
-            break;
-        }
-        cameraInters[i] = nextInter;
-        hitPoint = nextInter.coords;
-        N = nextInter.normal;
-    }
-
-    hitPoint = lightInter.coords;
-    N = lightInter.normal;
-
-
-    for (int i = 0; i < numRaysFromLight; i++) {
-        Vector3f direction = getRandomDirection(hitPoint, N, pdf);
-        inverseDirections[totalRaysFromCamera + i] = direction;
-        Intersection nextInter = intersect(Ray(hitPoint + N * EPSILON, direction));
-        if (!nextInter.happened) {
-            numRaysFromLight = i - 1;
-            break;
-        }
-        lightInters[i] = nextInter;
-        hitPoint = nextInter.coords;
-        N = nextInter.normal;
-    }
+    w_s[0] = ray.direction;
+    lightInters[0] = lightInter;
 
     Vector3f cameraColors[numRaysFromCamera];
     Vector3f lightColors[numRaysFromLight];
 
-    lightColors[0] = lightInter.material->getEmission() / 255;
-    // std::cout << "Initial Emission: " << lightColors[0] << "\n";
 
-    // Vector3f nextColor = castRay(nextRay, depth)  * theta * 2 * std::max(pdf, EPSILON) / RussianRoulette;
-    // Vector3f newColor = getIntersectionColor(ray, inter, hitPoint, N, st, dir) + nextColor / 255;
-
-    Vector3f v;
-    Intersection currentInter;
-    float theta;
-
-    // Precompute side from light since those won't change
-    for (int i = 1; i < numRaysFromLight; i++) {
-        v = inverseDirections[totalRaysFromCamera + i].normalized();
-        currentInter = lightInters[i];
-        theta = abs(dotProduct(-inverseDirections[totalRaysFromCamera + i - 1].normalized(), inverseDirections[totalRaysFromCamera + i].normalized()));
-        // std::cout << totalRaysFromCamera + numRaysFromLight << ", " << totalRaysFromCamera << "\n";
-        lightColors[i] = lightColors[i - 1] * theta * 2 * std::max(pdf, EPSILON) / RussianRoulette;
-        // lightColors[i] = lightColors[i - 1] * (Vector3f(1, 1, 1) * currentInter.material->Ks * dotProduct(v, v - 2 * dotProduct(v, currentInter.normal.normalized()) * 
-        //     currentInter.normal.normalized()) + currentInter.material->Kd * currentInter.material->m_color * 
-        //     dotProduct(currentInter.normal.normalized(), (v * -1).normalized())) / 255;
-            
-        // std::cout << "Light: " << lightColors[i] << "\n";
-    }
-
-    // std::cout << "Next Emission: " << lightColors[1] << "\n";
-
-    // We can also precompute the camera colors and will just have to multiply them by the previous light color
-    v = inverseDirections[numRaysFromCamera - 1].normalized();
-    currentInter = cameraInters[numRaysFromCamera - 1];
-    cameraColors[numRaysFromCamera - 1] = Vector3f(1, 1, 1);
-    // cameraColors[numRaysFromCamera - 1] = Vector3f(1, 1, 1) * currentInter.material->Ks * dotProduct(v, v - 2 * dotProduct(v, currentInter.normal.normalized()) * 
-    //     currentInter.normal.normalized()) + currentInter.material->Kd * currentInter.material->m_color * 
-    //     dotProduct(currentInter.normal.normalized(), (v * -1).normalized()) / 255;
-
-    for (int i = numRaysFromCamera - 2; i >= 0; i--) {
-        v = inverseDirections[i].normalized();
-        currentInter = cameraInters[i];
-        theta = abs(dotProduct(-inverseDirections[i + 1].normalized(), inverseDirections[i].normalized()));
-        cameraColors[i] = cameraColors[i + 1] * theta * 2 * std::max(pdf, EPSILON) / RussianRoulette;
-        // cameraColors[i] = cameraColors[i + 1] * (Vector3f(1, 1, 1) * currentInter.material->Ks * dotProduct(v, v - 2 * dotProduct(v, currentInter.normal.normalized()) * 
-        //     currentInter.normal.normalized()) + currentInter.material->Kd * currentInter.material->m_color * 
-        //     dotProduct(currentInter.normal.normalized(), (v * -1).normalized())) / 255;
-        // std::cout << "Camera: " << cameraColors[i] << "\n";
-    }
-
-
+    // Create path from camera
+    // Still need to implement glass and mirrors
     for (int i = 0; i < numRaysFromCamera; i++) {
-        for (int j = 0; j < numRaysFromLight; j++) {
-            Intersection testOccluded = intersect(Ray(cameraInters[i].coords + cameraInters[i].normal.normalized() * EPSILON, lightInters[j].coords - (cameraInters[i].coords + cameraInters[i].normal.normalized() * EPSILON)));
-            if (testOccluded.happened && testOccluded.obj == lightInters[j].obj) {
-                theta = abs(dotProduct(-inverseDirections[i].normalized(), inverseDirections[totalRaysFromCamera + j].normalized()));
-                Vector3f currentCameraColor = lightColors[j] * theta * 2 * std::max(pdf, EPSILON) / RussianRoulette * cameraColors[i]; // might be cameraColors[i-1]
-                Vector3f albedo = cameraInters[i].obj->evalDiffuseColor(cameraInters[i].tcoords);
-                Vector3f f = cameraInters[i].material->eval(-inverseDirections[i],cameraInters[i].normal,albedo);
-                hitColor += f * cameraColors[i] * lightColors[j];
-                // std::cout << cameraInters[i].tcoords.x << ", " << cameraInters[i].tcoords.y << "\n";
+        N = inter.normal.normalized();
+        st = inter.tcoords;
+        Vector3f w_ = inter.material->sample(w_s[i], N).normalized();
+        float pdf = inter.material->pdf(w_s[i], w_, N);
+
+        Vector3f albedo = inter.obj->evalDiffuseColor(st);
+        Vector3f f = inter.material->eval(w_,N,albedo);
+
+        if(pdf<EPSILON)
+            numRaysFromCamera = i;
+
+        float cosTheta_ = std::max(0.0f,dotProduct(N,w_));
+
+        cameraColors[i] = f * cosTheta_ / pdf / RussianRoulette;
+
+        if (i < numRaysFromCamera - 1) {
+            w_s[i + 1] = w_;
+            cameraInters[i + 1] = inter;
+            inter = intersect(Ray(inter.coords + N*EPSILON, w_));
+            if (!inter.happened) {
+                numRaysFromCamera = i;
             }
         }
     }
 
-    hitColor = hitColor / (numRaysFromCamera * numRaysFromLight);
 
-    // std::cout << hitColor << "\n";
-
-    if (hitColor.x < 0 || hitColor.y < 0 || hitColor.z < 0 || hitColor.x >= 0.8 || hitColor.y >= 0.8 || hitColor.z >= 0.8) {
-        std::cout << hitColor << "\n";
+    // Create path from light
+    N = lightInter.normal.normalized();
+    w_s[totalRaysFromCamera] = lightInter.material->sample(-N, N);
+    float pdf = lightInter.material->pdf(-N, w_s[totalRaysFromCamera], N);
+    Vector3f albedo = lightInter.obj->evalDiffuseColor(lightInter.tcoords);
+    Vector3f f = lightInter.material->eval(w_s[totalRaysFromCamera],N,albedo);
+    float cosTheta_ = std::max(0.0f,dotProduct(N,w_s[totalRaysFromCamera]));
+    lightColors[0] = f * cosTheta_ / pdf / RussianRoulette;
+    if (numRaysFromLight > 1) {
+        lightInters[1] = intersect(Ray(lightInter.coords + N*EPSILON, w_s[totalRaysFromCamera]));
+        if (!lightInters[1].happened) {
+            numRaysFromLight = 1;
+        }
     }
+
+    for (int i = 1; i < numRaysFromLight; i++) {
+        inter = lightInters[i];
+        N = inter.normal.normalized();
+        st = inter.tcoords;
+
+        Vector3f w_ = inter.material->sample(w_s[totalRaysFromCamera + i - 1], N).normalized();
+        pdf = inter.material->pdf(w_s[totalRaysFromCamera + i - 1], w_, N);
+
+        if (inter.obj != nullptr){
+            albedo = inter.obj->evalDiffuseColor(st);
+        }
+        else {
+            albedo = Vector3f(0);
+        }
+        
+        f = inter.material->eval(w_,N,albedo);
+
+        if(pdf<EPSILON)
+            numRaysFromLight = i;
+
+        cosTheta_ = std::max(0.0f,dotProduct(N,w_));
+
+        lightColors[i] = f * cosTheta_ / pdf / RussianRoulette;
+
+        w_s[totalRaysFromCamera + i] = w_;
+        lightInters[i] = inter;
+        inter = intersect(Ray(inter.coords + N*EPSILON, w_));
+        if (!inter.happened) {
+            numRaysFromLight = i;
+        }
+    }
+
+
+    // Calculate final color
+    for (int i = 0; i < numRaysFromCamera; i++) {
+        for (int j = 0; j < numRaysFromLight; j++) {
+            Vector3f start = cameraInters[i].coords + cameraInters[i].normal.normalized() * EPSILON;
+            Intersection testOccluded = intersect(Ray(start, lightInters[j].coords - start));
+            if (testOccluded.happened && testOccluded.obj == lightInters[j].obj) {
+                // Vector3f color = lightColors[0] + lightInters[0].material->getEmission();
+                Vector3f color = lightColors[0];
+                for (int k = 1; k < j; k++) {
+                    Vector3f le = lightInters[k].material->hasEmission() ? lightInters[k].material->getEmission() : Vector3f(0);
+                    color = le/255 + lightColors[k] * color;
+                }
+
+                for (int k = i; k >= 0; k--) {
+                    Vector3f le = cameraInters[k].material->hasEmission() ? cameraInters[k].material->getEmission() : Vector3f(0);
+                    color = le/255 + cameraColors[k] * color;
+                }
+
+                hitColor += color;
+            }
+        }
+    }
+
+    
+
+    // if (hitColor.x < 0 || hitColor.y < 0 || hitColor.z < 0 || hitColor.x >= 1 || hitColor.y >= 1 || hitColor.z >= 1) {
+    //     std::cout << hitColor << "\n";
+    // }
     
 
     return hitColor;
@@ -193,72 +199,141 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
 // Implementation of Path Tracing
 Vector3f Scene::castRay(const Ray &ray, int depth) const
 {   
+    if(depth>this->maxDepth){
+        Vector3f hitColor = Vector3f(0,0,0);
+        return hitColor;
+    }
     Vector3f hitColor = Vector3f(0);
     auto inter = intersect(ray);  // find the cloest intersection of the ray and the objects
     if (!inter.happened)return backgroundColor;  // if no intersection, return background color
+    if(!inter.obj || !inter.material){
+        return Vector3f(0.156,0.25,0.268);
+    }
 
     Vector3f hitPoint = inter.coords;  // the intersection point
     Vector3f N = inter.normal; // normal
     Vector2f st = inter.tcoords; // texture coordinates (u, v)
     Vector3f dir = ray.direction;  // ray direction
-
+    //[Debug to see if the floor normals are pointing in the right direction]
+    // return Vector3f(std::abs(N.x),std::abs(N.y),std::abs(N.z));
+    // return N;
     if (inter.material->m_type == EMIT) {  // if the object is a light source
         return inter.material->m_emission;  // return light color
     } else if (inter.material->m_type == DIFFUSE ||
-           ((inter.material->m_type == GLASS || inter.material->m_type == MIRROR) && TASK_N < 1.3f) || depth > maxDepth) {
+           ((inter.material->m_type == GLASS || inter.material->m_type == MIRROR) && TASK_N < 1.3f)) {
 
         if (TASK_N == 2) {
             // TODO: task 2 Monte Carlo Path Tracing with Russian Roulette termination
-            if (get_random_float() > RussianRoulette) {
-                return Vector3f(0);
-            }
-
+            // Emission term Le(x,w)
+            Vector3f le = Vector3f(0);
+            if(inter.material->hasEmission())
+                le = inter.material->getEmission();
             
-            Intersection i = Intersection();
-            i.normal = -N;
-            Sphere *interSphere = new Sphere(hitPoint, 1.0f, new Material(GLASS, Vector3f(1)));
-            float pdf;
+           //Prevent recursion in higher depths 
+            if(get_random_float()>RussianRoulette)
+                return le;
+            
+            //Sample w' from brdf
+            Vector3f w_ = inter.material->sample(dir,N).normalized();
+            float pdf = inter.material->pdf(dir,w_,N);
+            //Evaluate f(w,w')
+            Vector3f albedo = inter.obj->evalDiffuseColor(st);
+            Vector3f f = inter.material->eval(w_,N,albedo);
 
-            while (dotProduct(i.normal, N) < 0) {
-                interSphere->Sample(i, pdf);
-            }
-            Ray nextRay = Ray(hitPoint + N.normalized() * EPSILON, i.normal.normalized());
-            auto nextInter = intersect(nextRay);
-            auto theta = abs(dotProduct(i.normal.normalized(), -dir));
-
-            if (!nextInter.happened || nextInter.material->m_type != EMIT) {
-                Vector3f nextColor = castRay(nextRay, depth)  * theta * 2 * std::max(pdf, EPSILON) / RussianRoulette;
-                Vector3f newColor = getIntersectionColor(ray, inter, hitPoint, N, st, dir) + nextColor / 255;
-                
-                return newColor;
-            }
-
-            return (nextInter.material->m_emission * inter.material->Kd * theta * (std::max(pdf, EPSILON) * 2) / RussianRoulette) / 255 + getIntersectionColor(ray, inter, hitPoint, N, st, dir);
+            //Prevent division by zero
+            if(pdf<EPSILON)
+                return le;
+            //cos(thetai)
+            float cosTheta_ = std::max(0.0f,dotProduct(N,w_));
+            //recurse
+            Ray recurseRay(hitPoint+N*EPSILON,w_);
+            return le + ((f*castRay(recurseRay,depth+1) * cosTheta_) / pdf / RussianRoulette);
         }
 
-        return getIntersectionColor(ray, inter, hitPoint, N, st, dir);
+        Vector3f diffuseColor = 0, specularColor = 0;
+        int light_sample=4;  // the number of samples on the area light
+        // int light_sample=8;
+        // int light_sample=16;
+        // int light_sample=32;
+        // int light_sample=64;
+        // int light_sample=128;
+        // int light_sample=256;
+        for (int i = 0; i < light_sample; ++i) {
+            // TODO: task 1.1 Basic ray tracing (Whitted style) with area light sampling
+            // sample area light, basic shading, compute Phong illumination model
+            // Get a random light emmitting surface from the scene , 
+            // calculate its interaction with the objects on the scene
+            Intersection light_pos;
+            float light_pdf;
+            sampleLight(light_pos,light_pdf);
+            //Direction of light from the source to hitpoint
+            if(!light_pos.material){
+                continue;
+            }
+            Vector3f L = light_pos.coords - hitPoint;
+            float light_distance = L.norm();
+            L = normalize(L);
+
+            Vector3f V = normalize(-dir);
+
+            Ray shadow_ray(hitPoint + N*EPSILON , L);
+            // Ray shadow_ray(hitPoint , L);
+            Intersection shadow_inter = intersect(shadow_ray);
+            //Check if there the ray hits the object without an obstruction
+            //i.e if there is a shadow , there is obstruction or
+            //the shadow caused by the object is somewhere far away 
+            if(!shadow_inter.happened || (shadow_inter.material && shadow_inter.material->m_type == EMIT)){
+                Vector3f Kd = inter.obj->evalDiffuseColor(st);
+                float diff = std::max(0.0f,dotProduct(N,L));
+                Vector3f diffuse = Kd * light_pos.material->m_emission * diff;
+                Vector3f R = reflect(-L,N);
+                float spec_angle = std::max(0.0f,dotProduct(V,R));
+                // Phong shading
+                Vector3f specular = Vector3f(0.5f) * light_pos.material->m_emission*std::pow(spec_angle,32.0f);
+                diffuseColor+= diffuse;
+                specularColor+= specular;
+            }
+
+        }
+        // Vector3f Kd = inter.obj->evalDiffuseColor(st);
+        // Vector3f ambient_light_intensity= Vector3f(0.05f);
+        // Vector3f ambientColor = Kd*ambient_light_intensity;
+        // hitColor = (ambientColor + diffuseColor + specularColor) / (float)light_sample;
+        hitColor = (diffuseColor + specularColor) / (float)light_sample;
     
     } else if (inter.material->m_type == GLASS && TASK_N >= 1.3f) {  // if the object is glass
         // TODO: task 1.3 Glass Material
         // if the depth exceeds the maximum depth, return the hitColor to avoid infinite recursion
-        Ray reflectionRay = Ray(hitPoint + N.normalized() * EPSILON, reflect(ray.direction, N.normalized()));
-        Vector3f reflection_color = castRay(reflectionRay, depth + 1);
+        //When the ray hits the surface at a shallow angle , we can skip the refraction part entirrly
+        float kr=fresnel(ray.direction,N,inter.material->ior);
+        if(kr<1){
+            Vector3f refractionDirection = refract(ray.direction,N,inter.material->ior).normalized();
+            // While the ray enters the object , nudge the hitpoint inside the object and when the ray exits the object , nudge the hitpoint outside the object
+            Vector3f refractionRayOrigin = (dotProduct(refractionDirection,N)<0) ? hitPoint - N*EPSILON : hitPoint + N*EPSILON;
+            Ray refractionRay(refractionRayOrigin,refractionDirection);
+            Vector3f color_refraction = castRay(refractionRay,depth+1);
+            Vector3f reflectionDirection = reflect(ray.direction,N).normalized();
+            Ray reflectionRay(hitPoint + N*EPSILON,reflectionDirection);
+            Vector3f color_reflection = castRay(reflectionRay,depth+1) * inter.material->m_color;
+            //Law of conservation of energy
+            hitColor = color_refraction*kr + color_reflection*(1-kr);
+        }
+        else{
+            Vector3f reflectionDirection = reflect(ray.direction,N).normalized();
+            Ray reflectionRay(hitPoint + N*EPSILON,reflectionDirection);
+            hitColor = castRay(reflectionRay,depth+1) * inter.material->m_color;
 
-        Ray refractionRay = Ray(hitPoint - N.normalized() * EPSILON, refract(ray.direction, N.normalized(), inter.material->ior));
-        Vector3f refraction_color = castRay(refractionRay, depth + 1);
-        
-        float kr = fresnel(ray.direction, N, inter.material->ior);
-
-        hitColor =  kr * reflection_color + (1 - kr) * refraction_color;
-    
+        }
     } else if (inter.material->m_type == MIRROR && TASK_N >= 1.3f) {  // if the object is mirror
         // TODO: task 1.3 Mirror Refection
-
-        Ray reflectionRay = Ray(hitPoint + N.normalized() * EPSILON, reflect(ray.direction, N));
-        hitColor = castRay(reflectionRay, depth + 1);
+        
+        Vector3f reflectionDirection = reflect(ray.direction,N).normalized();
+        Ray reflectionRay(hitPoint + N*EPSILON,reflectionDirection);
+        hitColor = castRay(reflectionRay,depth+1) * inter.material->m_color;
     }
 
     return hitColor;
+    // return inter.material->m_color;
 }
 
 
