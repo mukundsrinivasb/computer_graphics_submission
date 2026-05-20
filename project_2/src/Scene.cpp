@@ -106,6 +106,18 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
 
         Ray reflectionRay = Ray(hitPoint + N.normalized() * EPSILON, reflect(ray.direction, N));
         hitColor = castRay(reflectionRay, depth + 1);
+    
+    } else if (inter.material->m_type == DIFF_MIRROR && TASK_N >= 1.3f) {  // Charlie: if the object is reflective but has its own colour
+        Ray reflectionRay = Ray(hitPoint + N.normalized() * EPSILON, reflect(ray.direction, N.normalized()));
+        Vector3f reflection_color = castRay(reflectionRay, depth + 1);
+
+        //Vector3f phong_color = inter.material->getColor(); // this is a decent backup if the phong rendering still looks wrong 
+        Vector3f phong_color = castRay(ray, maxDepth + 1); // get the normal phong shading for this intersection
+
+        float kr = fresnel(ray.direction, N, inter.material->ior);
+
+        hitColor =  kr * reflection_color + (1 - kr) * phong_color;
+    
     }
 
     return hitColor;
