@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 
     //Anusha: scene defaults
     int width = 256, height = 256;
-    int spp = 64;
+    int spp = 8;
     float fov = 40;
 
     //Anusha: read user input from command line if provided

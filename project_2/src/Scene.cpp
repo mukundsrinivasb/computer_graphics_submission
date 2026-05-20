@@ -173,7 +173,7 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth) const {
                 Vector3f albedo = cameraInters[i].obj->evalDiffuseColor(cameraInters[i].tcoords);
                 Vector3f f = cameraInters[i].material->eval(-inverseDirections[i],cameraInters[i].normal,albedo);
                 hitColor += f * cameraColors[i] * lightColors[j];
-                std::cout << cameraInters[i].tcoords.x << ", " << cameraInters[i].tcoords.y << "\n";
+                // std::cout << cameraInters[i].tcoords.x << ", " << cameraInters[i].tcoords.y << "\n";
             }
         }
     }

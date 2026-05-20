@@ -179,6 +179,7 @@ Vector3f Material::eval(const Vector3f &dir, const Vector3f &N, const Vector3f &
             float cosalpha = dotProduct(N, dir);
             if (cosalpha > 0.0f) {
                 Vector3f diffuse = Kd / M_PI;
+                std::cout << diffuse << "\n";
                 return diffuse;
             }
             else
