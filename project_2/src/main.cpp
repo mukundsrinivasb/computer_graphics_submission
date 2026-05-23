@@ -88,8 +88,8 @@ int main(int argc, char** argv)
     light_pawn->specularExponent=100;
     light_pawn->ior=8; // 8
 
-    MeshTriangle light_floor("../models/chessScene/light_floor.obj", 0, diffuse_tile); // floor material wrong for now
-    MeshTriangle dark_floor("../models/chessScene/dark_floor.obj", 0, mirror_tile); // floor material wrong for now
+    MeshTriangle light_floor("../models/chessScene/light_floor.obj", 0, diffuse_tile); 
+    MeshTriangle dark_floor("../models/chessScene/dark_floor.obj", 0, mirror_tile); 
     MeshTriangle back_wall("../models/chessScene/back_wall.obj", Vector3f(0, 0, 0), diffuse_grey);
 
     MeshTriangle king("../models/chessScene/king_piece.obj", Vector3f(0, 0, 7), gold);
