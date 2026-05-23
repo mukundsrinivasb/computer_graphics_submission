@@ -1,2 +1,2 @@
 spp,fov,resolution,camera_position,renderTime,fileName
-64,40,1024x1024,(0,1,-12.9),2764,r_spp64_fov40_res1024x1024.ppm
+64,40,1024x1024,(0;1;-12.9),2764,r_spp64_fov40_res1024x1024.ppm
