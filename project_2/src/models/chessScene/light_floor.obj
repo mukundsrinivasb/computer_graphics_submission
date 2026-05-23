@@ -1,0 +1,143 @@
+# left column, near to far
+v 1 0 -8
+v 1 0 -6
+v 3 0 -6
+v 3 0 -8
+
+v 1 0 -4
+v 1 0 -2
+v 3 0 -2
+v 3 0 -4
+
+v 1 0 0
+v 1 0 2
+v 3 0 2
+v 3 0 0
+
+v 1 0 4
+v 1 0 6
+v 3 0 6
+v 3 0 4
+
+# middle column
+v -1 0 -6
+v -1 0 -4
+v 1 0 -4
+v 1 0 -6
+
+v -1 0 -2
+v -1 0 0
+v 1 0 0
+v 1 0 -2
+
+v -1 0 2
+v -1 0 4
+v 1 0 4
+v 1 0 2
+
+v -1 0 6
+v -1 0 8
+v 1 0 8
+v 1 0 6
+
+# right column
+v -3 0 -8
+v -3 0 -6
+v -1 0 -6
+v -1 0 -8
+
+v -3 0 -4
+v -3 0 -2
+v -1 0 -2
+v -1 0 -4
+
+v -3 0 0
+v -3 0 2
+v -1 0 2
+v -1 0 0
+
+v -3 0 4
+v -3 0 6
+v -1 0 6
+v -1 0 4
+
+# in front of chess board part
+v -20 0 -2000
+v -20 0 -8
+v 20 0 -8
+v 20 0 -2000
+
+# behind chess board part
+v -20 0 8
+v -20 0 20
+v 20 0 20
+v 20 0 8
+
+# to left of chess board part
+v 3 0 -8
+v 3 0 8
+v 20 0 8
+v 20 0 -8
+
+# to right of chess board part
+v -20 0 -8
+v -20 0 8
+v -3 0 8
+v -3 0 -8
+
+
+# faces in same order 
+# left column
+f 1 2 3
+f 1 3 4
+
+f 5 6 7
+f 5 7 8
+
+f 9 10 11
+f 9 11 12
+
+f 13 14 15
+f 13 15 16
+
+# middle column
+f 17 18 19
+f 17 19 20
+
+f 21 22 23
+f 21 23 24
+
+f 25 26 27
+f 25 27 28
+
+f 29 30 31
+f 29 31 32
+
+# right column
+f 33 34 35
+f 33 35 36
+
+f 37 38 39
+f 37 39 40
+
+f 41 42 43
+f 41 43 44
+
+f 45 46 47
+f 45 47 48
+
+# in front of chess board part
+f 49 50 51
+f 49 51 52
+
+# behind chess board part
+f 53 54 55
+f 53 55 56
+
+# to left of chess board part
+f 57 58 59
+f 57 59 60
+
+# to right of chess board part
+f 61 62 63
+f 61 63 64
