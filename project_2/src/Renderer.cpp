@@ -43,15 +43,17 @@ void Renderer::Render(const Scene& scene)
             int m = i + j * scene.width;  // pixel index
             if(scene.spp==1){
                 // TODO: task 1.1 pixel projection
-                Ray r = Ray(eye_pos, Vector3f((((float) i + 0.5f) / scene.height * 2 - 1) * scale, (((float) j + 0.5f) / scene.width * 2 - 1) * scale, 1));
+                //Anusha: fixed aspect ratio - i divides by width, j divides by height, imageAspectRatio applied to x
+                Ray r = Ray(eye_pos, Vector3f((((float) i + 0.5f) / scene.width * 2 - 1) * scale * imageAspectRatio, (((float) j + 0.5f) / scene.height * 2 - 1) * scale, 1));
                 Vector3f pixel_color = scene.castRay(r, 0);
                 framebuffer[framebuffer.size() - 1 - m] = pixel_color;
             }else {
                 // TODO: task 2 multi-sampling (anti-aliasing)
                 Vector3f total = {0, 0, 0};
                 for (int n = 0; n < scene.spp; n++) {
-                    Ray r = Ray(eye_pos, Vector3f((((float) i + (get_random_float())) / scene.height * 2 - 1) * scale, 
-                        (((float) j + (get_random_float())) / scene.width * 2 - 1) * scale, 1));
+                    //Anusha: fixed aspect ratio - i divides by width, j divides by height, imageAspectRatio applied to x
+                    Ray r = Ray(eye_pos, Vector3f((((float) i + get_random_float()) / scene.width * 2 - 1) * scale * imageAspectRatio, 
+                        (((float) j + get_random_float()) / scene.height * 2 - 1) * scale, 1));
                     Vector3f pixel_color = scene.castRay(r, 0);
                     total += pixel_color;
                 }
