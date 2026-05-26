@@ -2,3 +2,4 @@ spp,fov,resolution,camera_position,render_time(seconds),fileName
 64,40,1024x1024,"[0;1;-12.9]",2764,r_spp64_fov40_res1024x1024.ppm
 64,40,256x256,"[0;1;-12.9]",694,viewpoint1.ppm
 64,40,256x256,"[0;2.5;-10]",712,viewpoint2.ppm
+4,40,256x256,"[0;1;-12.9]",45,binary_task2.ppm

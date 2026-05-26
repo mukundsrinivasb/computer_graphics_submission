@@ -25,9 +25,28 @@ int main(int argc, char** argv)
     int spp = 16; // change to >64 for final render
     float fov = 40;
 
+    //Anusha: king position defaults
+    float king_x = 0, king_y = 0, king_z = 7;
+
+    //Anusha: king material colour defaults (gold)
+    float king_r = 0.5, king_g = 0.4, king_b = 0;
+
+    //Anusha: light_middle position defaults
+    float lx = 0, ly = 0, lz = 8;
+
+    //Anusha: background colour defaults (black)
+    float bg_r = 0, bg_g = 0, bg_b = 0;
+
+    //Anusha: light emission strength defaults
+    float light_emission = 60;
+    float dim_light_emission = 30;
+
+    //Anusha: back wall colour defaults (dark grey, same as original)
+    float wall_r = 0.07, wall_g = 0.07, wall_b = 0.07;
+
     //Anusha: read user input from command line if provided
-    //Anusha: usage: ./RayTracing <task> <eye_x> <eye_y> <eye_z> <width> <height> <spp> <fov>
-    //Anusha: e.g:   ./RayTracing 2 278 273 -800 256 256 64 40
+    //Anusha: usage: ./RayTracing <task> <eye_x> <eye_y> <eye_z> <width> <height> <spp> <fov> <king_x> <king_y> <king_z> <king_r> <king_g> <king_b> <lx> <ly> <lz> <bg_r> <bg_g> <bg_b> <light_emission> <dim_light_emission> <wall_r> <wall_g> <wall_b>
+    //Anusha: e.g:   ./RayTracing 2 0 1 -12.9 256 256 64 40 0 0 7 0.5 0.4 0 0 0 8 0 0 0 60 30 0.07 0.07 0.07
     if (argc >= 5) {
         eye_x = atof(argv[2]);
         eye_y = atof(argv[3]);
@@ -40,9 +59,56 @@ int main(int argc, char** argv)
     if (argc >= 8) spp = atoi(argv[7]);
     if (argc >= 9) fov = atof(argv[8]);
 
+    //Anusha: king position from command line
+    if (argc >= 12) {
+        king_x = atof(argv[9]);
+        king_y = atof(argv[10]);
+        king_z = atof(argv[11]);
+    }
+
+    //Anusha: king material colour from command line
+    if (argc >= 15) {
+        king_r = atof(argv[12]);
+        king_g = atof(argv[13]);
+        king_b = atof(argv[14]);
+    }
+
+    //Anusha: light position from command line
+    if (argc >= 18) {
+        lx = atof(argv[15]);
+        ly = atof(argv[16]);
+        lz = atof(argv[17]);
+    }
+
+    //Anusha: background colour from command line
+    if (argc >= 21) {
+        bg_r = atof(argv[18]);
+        bg_g = atof(argv[19]);
+        bg_b = atof(argv[20]);
+    }
+
+    //Anusha: light emission strength from command line
+    if (argc >= 23) {
+        light_emission = atof(argv[21]);
+        dim_light_emission = atof(argv[22]);
+    }
+
+    //Anusha: back wall colour from command line
+    if (argc >= 26) {
+        wall_r = atof(argv[23]);
+        wall_g = atof(argv[24]);
+        wall_b = atof(argv[25]);
+    }
+
     //Anusha: print settings so its easy to verify before waiting for the render
     printf("Camera: (%.1f, %.1f, %.1f)  Resolution: %dx%d  SPP: %d  FOV: %.1f\n",
            eye_x, eye_y, eye_z, width, height, spp, fov);
+    printf("King pos: (%.1f, %.1f, %.1f)  King colour: (%.2f, %.2f, %.2f)\n",
+           king_x, king_y, king_z, king_r, king_g, king_b);
+    printf("Light pos: (%.1f, %.1f, %.1f)\n", lx, ly, lz);
+    printf("Background colour: (%.2f, %.2f, %.2f)\n", bg_r, bg_g, bg_b);
+    printf("Light emission: %.1f  Dim light emission: %.1f\n", light_emission, dim_light_emission);
+    printf("Back wall colour: (%.2f, %.2f, %.2f)\n", wall_r, wall_g, wall_b);
 
     Scene scene(width, height); 
 
@@ -53,10 +119,14 @@ int main(int argc, char** argv)
     //Anusha: pass camera position into scene so Renderer.cpp can use it
     scene.eye_pos = Vector3f(eye_x, eye_y, eye_z);
 
+    //Anusha: set background colour from user input (used when rays miss all objects)
+    scene.backgroundColor = Vector3f(bg_r, bg_g, bg_b);
+
     // ---------------------- Charlie: chess scene -------------------------------------------
 
     // Charlie: creating new materials for our scene
-    Material* gold = new Material(DIFF_MIRROR, Vector3f(0.5, 0.4, 0)); //working
+    //Anusha: king colour now uses user input values
+    Material* gold = new Material(DIFF_MIRROR, Vector3f(king_r, king_g, king_b));
     gold->Kd=0.8;
     gold->Ks=0.2;
     gold->specularExponent=32;
@@ -72,7 +142,8 @@ int main(int argc, char** argv)
     diffuse_tile->Ks=0;
     diffuse_tile->ior=1.5;
 
-    Material* diffuse_grey = new Material(DIFFUSE, Vector3f(0.07, 0.07, 0.07)); // working
+    //Anusha: back wall colour now uses user input values
+    Material* diffuse_grey = new Material(DIFFUSE, Vector3f(wall_r, wall_g, wall_b)); // working
     diffuse_tile->Kd=0.7;
     diffuse_tile->Ks=0.3;
 
@@ -92,7 +163,8 @@ int main(int argc, char** argv)
     MeshTriangle dark_floor("../models/chessScene/dark_floor.obj", 0, mirror_tile); 
     MeshTriangle back_wall("../models/chessScene/back_wall.obj", Vector3f(0, 0, 0), diffuse_grey);
 
-    MeshTriangle king("../models/chessScene/king_piece.obj", Vector3f(0, 0, 7), gold);
+    //Anusha: king position now uses user input values
+    MeshTriangle king("../models/chessScene/king_piece.obj", Vector3f(king_x, king_y, king_z), gold);
 
     // pawns on the left (light) - numbered for how close they are to the king (1 = closest)
     MeshTriangle light_pawn_1("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, 5), light_pawn);
@@ -132,14 +204,16 @@ int main(int argc, char** argv)
     scene.Add(&dark_pawn_7);
    
     Material* light = new Material(EMIT, Vector3f(1));
-    light->m_emission=60; 
+    //Anusha: light emission now uses user input
+    light->m_emission = light_emission;
 
     Material* dim_light = new Material(EMIT, Vector3f(1));
-    dim_light->m_emission=30;
+    //Anusha: dim light emission now uses user input
+    dim_light->m_emission = dim_light_emission;
 
     MeshTriangle light_behind("../models/chessScene/light.obj", Vector3f(0, 15, -20), dim_light); 
-    MeshTriangle light_middle("../models/chessScene/light.obj", Vector3f(0, 0, 8), light); // working! 
-
+    //Anusha: light_middle position now uses user input values
+    MeshTriangle light_middle("../models/chessScene/light.obj", Vector3f(lx, ly, lz), light); // working! 
 
     scene.Add(&light_middle);
     scene.Add(&light_behind);
