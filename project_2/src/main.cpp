@@ -18,12 +18,12 @@ int main(int argc, char** argv)
         TASK_N=(float)atof(argv[1]);
 
     // Charlie: new camera defaults
-    float eye_x = 0, eye_y = 1, eye_z = -12.9; 
+    float eye_x = 0, eye_y = 0.95, eye_z = -11.5; 
 
-    // Charlie: new scene defaults
-    int width = 512, height = 512; // Charlie: eventually needs to be 1920:1080 (or something of this ratio - I've been using 480:270)
-    int spp = 16; // change to >64 for final render
-    float fov = 40;
+    // Charlie: new scene defaults (as they should be for the final render)
+    int width = 1920, height = 1080; // Charlie: use something smaller like 480:270 for quick debugging
+    int spp = 64; 
+    float fov = 30;
 
     //Anusha: king position defaults
     float king_x = 0, king_y = 0, king_z = 7;
@@ -43,6 +43,11 @@ int main(int argc, char** argv)
 
     //Anusha: back wall colour defaults (dark grey, same as original)
     float wall_r = 0.07, wall_g = 0.07, wall_b = 0.07;
+
+    // Charlie: Adding option to use less smooth models for quicker debugging
+    bool smooth = true; // make this FALSE for quick debugging, TRUE for final render
+    std::string pawn_path;
+    std::string king_path; 
 
     //Anusha: read user input from command line if provided
     //Anusha: usage: ./RayTracing <task> <eye_x> <eye_y> <eye_z> <width> <height> <spp> <fov> <king_x> <king_y> <king_z> <king_r> <king_g> <king_b> <lx> <ly> <lz> <bg_r> <bg_g> <bg_b> <light_emission> <dim_light_emission> <wall_r> <wall_g> <wall_b>
@@ -163,26 +168,35 @@ int main(int argc, char** argv)
     MeshTriangle dark_floor("../models/chessScene/dark_floor.obj", 0, mirror_tile); 
     MeshTriangle back_wall("../models/chessScene/back_wall.obj", Vector3f(0, 0, 0), diffuse_grey);
 
+    // determine which version of the models to use
+    if (smooth) {
+        king_path = "../models/chessScene/king_piece_smooth.obj";
+        pawn_path = "../models/chessScene/pawn_piece_smooth.obj";
+    } else {
+        king_path = "../models/chessScene/king_piece.obj";
+        pawn_path = "../models/chessScene/pawn_piece.obj";
+    }
+
     //Anusha: king position now uses user input values
-    MeshTriangle king("../models/chessScene/king_piece.obj", Vector3f(king_x, king_y, king_z), gold);
+    MeshTriangle king(king_path, Vector3f(king_x, king_y, king_z), gold);
 
     // pawns on the left (light) - numbered for how close they are to the king (1 = closest)
-    MeshTriangle light_pawn_1("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, 5), light_pawn);
-    MeshTriangle light_pawn_2("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, 3), light_pawn);
-    MeshTriangle light_pawn_3("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, 1), light_pawn);
-    MeshTriangle light_pawn_4("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, -1), light_pawn);
-    MeshTriangle light_pawn_5("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, -3), light_pawn);
-    MeshTriangle light_pawn_6("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, -5), light_pawn);
-    MeshTriangle light_pawn_7("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, -7), light_pawn);
+    MeshTriangle light_pawn_1(pawn_path, Vector3f(2, 0, 5), light_pawn);
+    MeshTriangle light_pawn_2(pawn_path, Vector3f(2, 0, 3), light_pawn);
+    MeshTriangle light_pawn_3(pawn_path, Vector3f(2, 0, 1), light_pawn);
+    MeshTriangle light_pawn_4(pawn_path, Vector3f(2, 0, -1), light_pawn);
+    MeshTriangle light_pawn_5(pawn_path, Vector3f(2, 0, -3), light_pawn);
+    MeshTriangle light_pawn_6(pawn_path, Vector3f(2, 0, -5), light_pawn);
+    MeshTriangle light_pawn_7(pawn_path, Vector3f(2, 0, -7), light_pawn);
 
     // pawns on the right (dark) - numbered for how close they are to the king (1 = closest)
-    MeshTriangle dark_pawn_1("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, 5), dark_pawn);
-    MeshTriangle dark_pawn_2("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, 3), dark_pawn);
-    MeshTriangle dark_pawn_3("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, 1), dark_pawn);
-    MeshTriangle dark_pawn_4("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, -1), dark_pawn);
-    MeshTriangle dark_pawn_5("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, -3), dark_pawn);
-    MeshTriangle dark_pawn_6("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, -5), dark_pawn);
-    MeshTriangle dark_pawn_7("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, -7), dark_pawn);
+    MeshTriangle dark_pawn_1(pawn_path, Vector3f(-2, 0, 5), dark_pawn);
+    MeshTriangle dark_pawn_2(pawn_path, Vector3f(-2, 0, 3), dark_pawn);
+    MeshTriangle dark_pawn_3(pawn_path, Vector3f(-2, 0, 1), dark_pawn);
+    MeshTriangle dark_pawn_4(pawn_path, Vector3f(-2, 0, -1), dark_pawn);
+    MeshTriangle dark_pawn_5(pawn_path, Vector3f(-2, 0, -3), dark_pawn);
+    MeshTriangle dark_pawn_6(pawn_path, Vector3f(-2, 0, -5), dark_pawn);
+    MeshTriangle dark_pawn_7(pawn_path, Vector3f(-2, 0, -7), dark_pawn);
 
     scene.Add(&light_floor);
     scene.Add(&dark_floor);
