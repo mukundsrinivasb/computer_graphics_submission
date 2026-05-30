@@ -50,8 +50,9 @@ int main(int argc, char** argv)
     std::string king_path; 
 
     //Anusha: read user input from command line if provided
-    //Anusha: usage: ./RayTracing <task> <eye_x> <eye_y> <eye_z> <width> <height> <spp> <fov> <king_x> <king_y> <king_z> <king_r> <king_g> <king_b> <lx> <ly> <lz> <bg_r> <bg_g> <bg_b> <light_emission> <dim_light_emission> <wall_r> <wall_g> <wall_b>
-    //Anusha: e.g:   ./RayTracing 2 0 1 -12.9 256 256 64 40 0 0 7 0.5 0.4 0 0 0 8 0 0 0 60 30 0.07 0.07 0.07
+    //Anusha: usage: ./RayTracing <task> <eye_x> <eye_y> <eye_z> <width> <height> <spp> <fov> <king_x> <king_y> <king_z> <king_r> <king_g> <king_b> <lx> <ly> <lz> <bg_r> <bg_g> <bg_b> <light_emission> <dim_light_emission> <wall_r> <wall_g> <wall_b> <smooth>
+    //Anusha: e.g:   ./RayTracing 2 0 1 -12.9 256 256 64 40 0 0 7 0.5 0.4 0 0 0 8 0 0 0 60 30 0.07 0.07 0.07 0
+    //Anusha: smooth: 1 = smooth models (slow), 0 = low poly models (fast for debugging)
     if (argc >= 5) {
         eye_x = atof(argv[2]);
         eye_y = atof(argv[3]);
@@ -105,6 +106,11 @@ int main(int argc, char** argv)
         wall_b = atof(argv[25]);
     }
 
+    //Anusha: smooth model toggle from command line (1 = smooth, 0 = low poly)
+    if (argc >= 27) {
+        smooth = atoi(argv[26]) != 0;
+    }
+
     //Anusha: print settings so its easy to verify before waiting for the render
     printf("Camera: (%.1f, %.1f, %.1f)  Resolution: %dx%d  SPP: %d  FOV: %.1f\n",
            eye_x, eye_y, eye_z, width, height, spp, fov);
@@ -114,6 +120,7 @@ int main(int argc, char** argv)
     printf("Background colour: (%.2f, %.2f, %.2f)\n", bg_r, bg_g, bg_b);
     printf("Light emission: %.1f  Dim light emission: %.1f\n", light_emission, dim_light_emission);
     printf("Back wall colour: (%.2f, %.2f, %.2f)\n", wall_r, wall_g, wall_b);
+    printf("Smooth models: %s\n", smooth ? "yes" : "no");
 
     Scene scene(width, height); 
 
