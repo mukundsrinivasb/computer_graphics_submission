@@ -1,0 +1,39 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[margin=0.8in]{geometry}
+\title{Project Title}
+\author{Sam \and Charlie \and Anusha \and Mukund}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{Project Goal and Scope}
+
+The primary objective is to develop a photo-realistic 3D graphics rendering system in C++ utilizing advanced Path Tracing Techniques. 
+
+The specific target for the rendering competition is to accurately recreate an image of a chess scene \cite{dartmouth_rendering}. Achieving this level of visual fidelity requires a synthesis of custom geometric modeling, designing material properties, and a Path Tracer that handles shadows, and glass surfaces.
+
+
+\section*{Accomplishments}
+\subsection*{Bidirectional Path Tracing }
+We upgraded the core rendering engine to utilize Bidirectional Path Tracing. In traditional Monte Carlo path tracing, rays are exclusively cast from the camera into the scene. Our implementation improves upon this by simultaneously generating sub-paths from both the camera (eye paths) and the emissive light sources (light paths). The length of both sub-paths is determined stochastically, utilizing Russian Roulette for unbiased termination.
+
+
+
+\section*{Technical Details}
+
+To evaluate the final pixel color, the integrator attempts to connect the vertices of the camera sub-path with the vertices of the light sub-path. For each attempted connection, a deterministic visibility check (shadow ray) is cast between the two endpoints. If an object occludes the line of sight between the vertices, no color contribution is added for that specific connection. If the path is unoccluded, the radiance is evaluated and accumulated similarly to standard Monte Carlo integration. 
+
+To maximize sampling efficiency, path vertices are reused. For example, if a camera path generates three distinct hit points before termination, the engine evaluates connections from \textit{each} of those three hit points to the available light path vertices. The resulting color contributions are then averaged to form the final pixel estimate.
+
+\section*{Rendering Results and Experiments}
+
+
+\section*{Discussion}
+
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

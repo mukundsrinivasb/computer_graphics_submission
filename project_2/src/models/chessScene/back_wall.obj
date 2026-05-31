@@ -1,36 +1,9 @@
 # --- Vertices ---
-v -20 10 20
-v -20 10 20.1
-v 20 10 20.1
-v 20 10 20
-
-v -20 -0.1 20
-v -20 -0.1 20.1
-v 20 -0.1 20.1
-v 20 -0.1 20
+v -20 0 20
+v -20 20 20
+v 20 20 20
+v 20 0 20
 
 # --- faces ---
-
-# top faces
 f 1 2 3
 f 1 3 4
-
-# bottom faces
-f 5 7 6
-f 5 8 7
-
-# near face
-f 5 1 4
-f 5 4 8
-
-# left face
-f 8 3 7
-f 8 4 3
-
-# far face
-f 6 3 2
-f 6 7 3
-
-# right face
-f 6 2 1
-f 6 1 5

@@ -17,22 +17,42 @@ int main(int argc, char** argv)
     if (argc>=2)
         TASK_N=(float)atof(argv[1]);
 
-    //Anusha: camera defaults - matches what was hardcoded in Renderer.cpp
-    // float eye_x = 278, eye_y = 273, eye_z = -800;
-
     // Charlie: new camera defaults
-    float eye_x = 0, eye_y = 1, eye_z = -12.9;
-    // float eye_x = -1, eye_y = 1.3, eye_z = -12.9;
+    float eye_x = 0, eye_y = 0.95, eye_z = -11.5; 
 
-    //Anusha: scene defaults
-    // int width = 480, height = 270; // Charlie: eventually needs to be 1920:1080 (or something of this ratio - I've been using 480:270)
-    int width = 2048, height = 2048;
-    int spp = 32;
-    float fov = 40;
+    // Charlie: new scene defaults (as they should be for the final render)
+    int width = 1920, height = 1080; // Charlie: use something smaller like 480:270 for quick debugging
+    int spp = 64; 
+    float fov = 30;
+
+    //Anusha: king position defaults
+    float king_x = 0, king_y = 0, king_z = 7;
+
+    //Anusha: king material colour defaults (gold)
+    float king_r = 0.5, king_g = 0.4, king_b = 0;
+
+    //Anusha: light_middle position defaults
+    float lx = 0, ly = 0, lz = 8;
+
+    //Anusha: background colour defaults (black)
+    float bg_r = 0, bg_g = 0, bg_b = 0;
+
+    //Anusha: light emission strength defaults
+    float light_emission = 60;
+    float dim_light_emission = 30;
+
+    //Anusha: back wall colour defaults (dark grey, same as original)
+    float wall_r = 0.07, wall_g = 0.07, wall_b = 0.07;
+
+    // Charlie: Adding option to use less smooth models for quicker debugging
+    bool smooth = true; // make this FALSE for quick debugging, TRUE for final render
+    std::string pawn_path;
+    std::string king_path; 
 
     //Anusha: read user input from command line if provided
-    //Anusha: usage: ./RayTracing <task> <eye_x> <eye_y> <eye_z> <width> <height> <spp> <fov>
-    //Anusha: e.g:   ./RayTracing 2 278 273 -800 256 256 64 40
+    //Anusha: usage: ./RayTracing <task> <eye_x> <eye_y> <eye_z> <width> <height> <spp> <fov> <king_x> <king_y> <king_z> <king_r> <king_g> <king_b> <lx> <ly> <lz> <bg_r> <bg_g> <bg_b> <light_emission> <dim_light_emission> <wall_r> <wall_g> <wall_b> <smooth>
+    //Anusha: e.g:   ./RayTracing 2 0 1 -12.9 256 256 64 40 0 0 7 0.5 0.4 0 0 0 8 0 0 0 60 30 0.07 0.07 0.07 0
+    //Anusha: smooth: 1 = smooth models (slow), 0 = low poly models (fast for debugging)
     if (argc >= 5) {
         eye_x = atof(argv[2]);
         eye_y = atof(argv[3]);
@@ -45,125 +65,148 @@ int main(int argc, char** argv)
     if (argc >= 8) spp = atoi(argv[7]);
     if (argc >= 9) fov = atof(argv[8]);
 
+    //Anusha: king position from command line
+    if (argc >= 12) {
+        king_x = atof(argv[9]);
+        king_y = atof(argv[10]);
+        king_z = atof(argv[11]);
+    }
+
+    //Anusha: king material colour from command line
+    if (argc >= 15) {
+        king_r = atof(argv[12]);
+        king_g = atof(argv[13]);
+        king_b = atof(argv[14]);
+    }
+
+    //Anusha: light position from command line
+    if (argc >= 18) {
+        lx = atof(argv[15]);
+        ly = atof(argv[16]);
+        lz = atof(argv[17]);
+    }
+
+    //Anusha: background colour from command line
+    if (argc >= 21) {
+        bg_r = atof(argv[18]);
+        bg_g = atof(argv[19]);
+        bg_b = atof(argv[20]);
+    }
+
+    //Anusha: light emission strength from command line
+    if (argc >= 23) {
+        light_emission = atof(argv[21]);
+        dim_light_emission = atof(argv[22]);
+    }
+
+    //Anusha: back wall colour from command line
+    if (argc >= 26) {
+        wall_r = atof(argv[23]);
+        wall_g = atof(argv[24]);
+        wall_b = atof(argv[25]);
+    }
+
+    //Anusha: smooth model toggle from command line (1 = smooth, 0 = low poly)
+    if (argc >= 27) {
+        smooth = atoi(argv[26]) != 0;
+    }
+
     //Anusha: print settings so its easy to verify before waiting for the render
     printf("Camera: (%.1f, %.1f, %.1f)  Resolution: %dx%d  SPP: %d  FOV: %.1f\n",
            eye_x, eye_y, eye_z, width, height, spp, fov);
+    printf("King pos: (%.1f, %.1f, %.1f)  King colour: (%.2f, %.2f, %.2f)\n",
+           king_x, king_y, king_z, king_r, king_g, king_b);
+    printf("Light pos: (%.1f, %.1f, %.1f)\n", lx, ly, lz);
+    printf("Background colour: (%.2f, %.2f, %.2f)\n", bg_r, bg_g, bg_b);
+    printf("Light emission: %.1f  Dim light emission: %.1f\n", light_emission, dim_light_emission);
+    printf("Back wall colour: (%.2f, %.2f, %.2f)\n", wall_r, wall_g, wall_b);
+    printf("Smooth models: %s\n", smooth ? "yes" : "no");
 
-    // change the resolution for quick debugging if rendering is slow
-    // Scene scene(64, 64);
-    // Scene scene(128, 128);
-    Scene scene(width, height); // use this resolution for final rendering
-    // Scene scene(512, 512);
-    // Scene scene(768, 768);
-    // Scene scene(1024, 1024);
+    Scene scene(width, height); 
 
     scene.RussianRoulette = 0.8;
     scene.spp = spp;
     scene.fov = fov;
-    // scene.spp = 1;  // use 1 sample per pixel for quick debugging, use 64 for final rendering
 
     //Anusha: pass camera position into scene so Renderer.cpp can use it
     scene.eye_pos = Vector3f(eye_x, eye_y, eye_z);
 
+    //Anusha: set background colour from user input (used when rays miss all objects)
+    scene.backgroundColor = Vector3f(bg_r, bg_g, bg_b);
 
-    // Charlie: I'm just commenting this out for now just in case anyone still wants it for testing
-    // Charlie: feel free to remove it at any time, or I'll remove it before submitting
-
-    // ---------------------- Cornell box scene -------------------------------------------
-
-    // Material* pink = new Material(DIFFUSE, Vector3f(0.75f, 0.42f, 0.42f));
-    // Material* blue = new Material(DIFFUSE, Vector3f(0.50f, 0.45f, 0.70f));
-    // Material* purple = new Material(DIFFUSE, Vector3f(0.73f, 0.33f, 0.83f));
-    // Material* green = new Material(DIFFUSE, Vector3f(0.35f, 0.85f, 0.35f));
-    // Material* white = new Material(DIFFUSE, Vector3f(0.48f, 0.45f, 0.4f));
-    // Material* light = new Material(EMIT, Vector3f(1));
-    // light->m_emission=100;
-
-    // MeshTriangle floor("../models/cornellbox/floor.obj", Vector3f(0), white);
-    // MeshTriangle shortbox("../models/cornellbox/shortbox.obj",Vector3f(0), green);
-    // MeshTriangle tallbox("../models/cornellbox/tallbox.obj", Vector3f(0), new Material(MIRROR, Vector3f(1))); 
-    // MeshTriangle left("../models/cornellbox/left.obj", Vector3f(0), pink);
-    // MeshTriangle right("../models/cornellbox/right.obj",Vector3f(0),  blue);
-    // MeshTriangle light_("../models/cornellbox/light.obj",Vector3f(0,-5,0), light);
-    // MeshTriangle light_back("../models/cornellbox/light.obj", Vector3f(0, -5, -500), light);
-
-    // // commented out to test chess scene
-    // scene.Add(&floor);
-    // scene.Add(&shortbox);
-    // scene.Add(&tallbox);
-    // scene.Add(&left);
-    // scene.Add(&right);
-    // scene.Add(&light_);
-    // scene.Add(&light_back);
-
-    // scene.Add(new MeshTriangle("../models/spot/spot.obj", Vector3f(0),
-    //                 new Material(GLASS, Vector3f(1)))); 
-
-    // scene.Add(new Sphere(Vector3f(450,60,100), 60,
-    //                 new Material(GLASS, Vector3f(1))));
-
-    // Vector3f verts[4] = {{0,0,0.0}, {552.8,0,0.0}, {549.6, 0,559.2}, {0,0,559.2}};
-    // Vector2f st[4] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
-    // uint32_t vertIndex[6] = {0, 2, 1, 2,0,3};
-    // Material* mfloor=new Material(DIFFUSE, Vector3f(0));
-    // mfloor->textured=true;
-    // scene.Add(new MeshTriangle(verts, vertIndex, 2,st,mfloor));
-
-    // ---------------------- chess scene -------------------------------------------
+    // ---------------------- Charlie: chess scene -------------------------------------------
 
     // Charlie: creating new materials for our scene
-    Material* gold = new Material(DIFF_MIRROR, Vector3f(0.5, 0.3, 0));
-    gold->Kd=0.6;
-    gold->Ks=0.4;
-    gold->specularExponent=64;
-    gold->ior=3; // higher number = more reflection, not refraction? (this is just a note to self)
+    //Anusha: king colour now uses user input values
+    Material* gold = new Material(DIFF_MIRROR, Vector3f(king_r, king_g, king_b));
+    gold->Kd=0.8;
+    gold->Ks=0.2;
+    gold->specularExponent=32;
+    gold->ior=5; // higher number = more reflection, not refraction (this is just a note to self)
 
-    Material* mirror_tile = new Material(DIFF_MIRROR, Vector3f(0.1, 0.1, 0.1));
+    Material* mirror_tile = new Material(DIFF_MIRROR, Vector3f(0.03, 0.03, 0.03)); //working
     mirror_tile->Kd=1;
     mirror_tile->Ks=0;
     mirror_tile->ior=6; 
 
-    Material* diffuse_tile = new Material(DIFF_MIRROR, Vector3f(0.3, 0.3, 0.3));
+    Material* diffuse_tile = new Material(DIFF_MIRROR, Vector3f(0.07, 0.07, 0.07)); // working 
     diffuse_tile->Kd=1;
     diffuse_tile->Ks=0;
-    diffuse_tile->ior=1; 
+    diffuse_tile->ior=1.5;
 
-    Material* dark_pawn = new Material(DIFF_MIRROR, Vector3f(0.01, 0.01, 0.01));
-    dark_pawn->Kd=0.7;
-    dark_pawn->Ks=0.3;
-    dark_pawn->specularExponent=64;
-    dark_pawn->ior=2; 
+    //Anusha: back wall colour now uses user input values
+    Material* diffuse_grey = new Material(DIFFUSE, Vector3f(wall_r, wall_g, wall_b)); // working
+    diffuse_tile->Kd=0.7;
+    diffuse_tile->Ks=0.3;
 
-    Material* light_pawn = new Material(DIFF_MIRROR, Vector3f(0.8, 0.8, 0.8));
-    light_pawn->Kd=0.6;
-    light_pawn->Ks=0.4;
-    light_pawn->specularExponent=64;
-    light_pawn->ior=4; 
+    Material* dark_pawn = new Material(DIFF_MIRROR, Vector3f(0.00, 0.00, 0.00)); // working
+    dark_pawn->Kd=0.9;
+    dark_pawn->Ks=0.1;
+    dark_pawn->specularExponent=1;
+    dark_pawn->ior=1.1; // 1.1
 
-    MeshTriangle chess_floor("../models/chessScene/floor.obj", 0, diffuse_tile); // floor material wrong for now
-    MeshTriangle back_wall("../models/chessScene/back_wall.obj", Vector3f(0, 0, 0), diffuse_tile);
+    Material* light_pawn = new Material(DIFF_MIRROR, Vector3f(0.8, 0.8, 0.8)); // working
+    light_pawn->Kd=0.5; 
+    light_pawn->Ks=0.5;
+    light_pawn->specularExponent=100;
+    light_pawn->ior=8; // 8
 
-    MeshTriangle king("../models/chessScene/king_piece.obj", Vector3f(0, 0, 7), gold);
+    MeshTriangle light_floor("../models/chessScene/light_floor.obj", 0, diffuse_tile); 
+    MeshTriangle dark_floor("../models/chessScene/dark_floor.obj", 0, mirror_tile); 
+    MeshTriangle back_wall("../models/chessScene/back_wall.obj", Vector3f(0, 0, 0), diffuse_grey);
+
+    // determine which version of the models to use
+    if (smooth) {
+        king_path = "../models/chessScene/king_piece_smooth.obj";
+        pawn_path = "../models/chessScene/pawn_piece_smooth.obj";
+    } else {
+        king_path = "../models/chessScene/king_piece.obj";
+        pawn_path = "../models/chessScene/pawn_piece.obj";
+    }
+
+    //Anusha: king position now uses user input values
+    MeshTriangle king(king_path, Vector3f(king_x, king_y, king_z), gold);
 
     // pawns on the left (light) - numbered for how close they are to the king (1 = closest)
-    MeshTriangle light_pawn_1("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, 5), light_pawn);
-    MeshTriangle light_pawn_2("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, 3), light_pawn);
-    MeshTriangle light_pawn_3("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, 1), light_pawn);
-    MeshTriangle light_pawn_4("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, -1), light_pawn);
-    MeshTriangle light_pawn_5("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, -3), light_pawn);
-    MeshTriangle light_pawn_6("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, -5), light_pawn);
-    MeshTriangle light_pawn_7("../models/chessScene/pawn_piece.obj", Vector3f(2, 0, -7), light_pawn);
+    MeshTriangle light_pawn_1(pawn_path, Vector3f(2, 0, 5), light_pawn);
+    MeshTriangle light_pawn_2(pawn_path, Vector3f(2, 0, 3), light_pawn);
+    MeshTriangle light_pawn_3(pawn_path, Vector3f(2, 0, 1), light_pawn);
+    MeshTriangle light_pawn_4(pawn_path, Vector3f(2, 0, -1), light_pawn);
+    MeshTriangle light_pawn_5(pawn_path, Vector3f(2, 0, -3), light_pawn);
+    MeshTriangle light_pawn_6(pawn_path, Vector3f(2, 0, -5), light_pawn);
+    MeshTriangle light_pawn_7(pawn_path, Vector3f(2, 0, -7), light_pawn);
 
     // pawns on the right (dark) - numbered for how close they are to the king (1 = closest)
-    MeshTriangle dark_pawn_1("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, 5), dark_pawn);
-    MeshTriangle dark_pawn_2("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, 3), dark_pawn);
-    MeshTriangle dark_pawn_3("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, 1), dark_pawn);
-    MeshTriangle dark_pawn_4("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, -1), dark_pawn);
-    MeshTriangle dark_pawn_5("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, -3), dark_pawn);
-    MeshTriangle dark_pawn_6("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, -5), dark_pawn);
-    MeshTriangle dark_pawn_7("../models/chessScene/pawn_piece.obj", Vector3f(-2, 0, -7), dark_pawn);
+    MeshTriangle dark_pawn_1(pawn_path, Vector3f(-2, 0, 5), dark_pawn);
+    MeshTriangle dark_pawn_2(pawn_path, Vector3f(-2, 0, 3), dark_pawn);
+    MeshTriangle dark_pawn_3(pawn_path, Vector3f(-2, 0, 1), dark_pawn);
+    MeshTriangle dark_pawn_4(pawn_path, Vector3f(-2, 0, -1), dark_pawn);
+    MeshTriangle dark_pawn_5(pawn_path, Vector3f(-2, 0, -3), dark_pawn);
+    MeshTriangle dark_pawn_6(pawn_path, Vector3f(-2, 0, -5), dark_pawn);
+    MeshTriangle dark_pawn_7(pawn_path, Vector3f(-2, 0, -7), dark_pawn);
 
-    scene.Add(&chess_floor);
+    scene.Add(&light_floor);
+    scene.Add(&dark_floor);
     scene.Add(&back_wall);
     scene.Add(&king);
     scene.Add(&light_pawn_1);
@@ -181,20 +224,20 @@ int main(int argc, char** argv)
     scene.Add(&dark_pawn_6);
     scene.Add(&dark_pawn_7);
    
-    // adding lights - I'm not finished fiddling with these yet 
     Material* light = new Material(EMIT, Vector3f(1));
-    light->m_emission=100;
+    //Anusha: light emission now uses user input
+    light->m_emission = light_emission;
 
     Material* dim_light = new Material(EMIT, Vector3f(1));
-    dim_light->m_emission=30;
+    //Anusha: dim light emission now uses user input
+    dim_light->m_emission = dim_light_emission;
 
-    MeshTriangle light_("../models/chessScene/light.obj",Vector3f(0,-5,0), light);
-    MeshTriangle light_back("../models/chessScene/light.obj", Vector3f(0, -5, -500), dim_light);
-    MeshTriangle light_front("../models/chessScene/light_front.obj", Vector3f(0, 0, 14), light);
+    MeshTriangle light_behind("../models/chessScene/light.obj", Vector3f(0, 15, -20), dim_light); 
+    //Anusha: light_middle position now uses user input values
+    MeshTriangle light_middle("../models/chessScene/light.obj", Vector3f(lx, ly, lz), light); // working! 
 
-    scene.Add(&light_front);
-    scene.Add(&light_);
-    scene.Add(&light_back);
+    scene.Add(&light_middle);
+    scene.Add(&light_behind);
     
 
     // -----------------------------------------------------------------------
