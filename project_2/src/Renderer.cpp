@@ -43,16 +43,19 @@ void Renderer::Render(const Scene& scene)
             int m = i + j * scene.width;  // pixel index
             if(scene.spp==1){
                 // TODO: task 1.1 pixel projection
+                // std::cout << (((float) i + 0.5f) / scene.height * 2 - 1) << "\n";
                 Ray r = Ray(eye_pos, Vector3f((((float) i + 0.5f) / scene.height * 2 - 1) * scale, (((float) j + 0.5f) / scene.width * 2 - 1) * scale, 1));
-                Vector3f pixel_color = scene.castRayBidirectional(r, 0);
+                Vector3f pixel_color = scene.castRayBidirectional(r, 0, scene.spp);
                 framebuffer[framebuffer.size() - 1 - m] = pixel_color;
             }else {
                 // TODO: task 2 multi-sampling (anti-aliasing)
                 Vector3f total = {0, 0, 0};
                 for (int n = 0; n < scene.spp; n++) {
-                    Ray r = Ray(eye_pos, Vector3f((((float) i + (get_random_float())) / scene.height * 2 - 1) * scale, 
-                        (((float) j + (get_random_float())) / scene.width * 2 - 1) * scale, 1));
-                    Vector3f pixel_color = scene.castRayBidirectional(r, 0);
+                    Vector3f direction = Vector3f((((float) i + (get_random_float())) / scene.height * 2 - 1) * scale, 
+                        (((float) j + (get_random_float())) / scene.width * 2 - 1) * scale, 1);
+                    // std::cout << direction << "\n";
+                    Ray r = Ray(eye_pos, direction);
+                    Vector3f pixel_color = scene.castRayBidirectional(r, 0, scene.spp);
                     total += pixel_color;
                 }
 
@@ -60,7 +63,7 @@ void Renderer::Render(const Scene& scene)
                 //     std::cout << total / scene.spp << "\n";
                 // }
                 
-                framebuffer[framebuffer.size() - 1 - m] = total / scene.spp;
+                framebuffer[framebuffer.size() - 1 - m] = total;
             }
         }
         progress += 1.0f / (float)scene.height;

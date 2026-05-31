@@ -18,14 +18,16 @@ int main(int argc, char** argv)
         TASK_N=(float)atof(argv[1]);
 
     //Anusha: camera defaults - matches what was hardcoded in Renderer.cpp
-    //float eye_x = 278, eye_y = 273, eye_z = -800;
+    // float eye_x = 278, eye_y = 273, eye_z = -800;
 
     // Charlie: new camera defaults
     float eye_x = 0, eye_y = 1, eye_z = -12.9;
+    // float eye_x = -1, eye_y = 1.3, eye_z = -12.9;
 
     //Anusha: scene defaults
-    int width = 256, height = 256; // Charlie: eventually needs to be 1920:1080 (or something of this ratio - I've been using 480:270)
-    int spp = 64;
+    // int width = 480, height = 270; // Charlie: eventually needs to be 1920:1080 (or something of this ratio - I've been using 480:270)
+    int width = 2048, height = 2048;
+    int spp = 32;
     float fov = 40;
 
     //Anusha: read user input from command line if provided
@@ -85,7 +87,7 @@ int main(int argc, char** argv)
     // MeshTriangle light_("../models/cornellbox/light.obj",Vector3f(0,-5,0), light);
     // MeshTriangle light_back("../models/cornellbox/light.obj", Vector3f(0, -5, -500), light);
 
-    // commented out to test chess scene
+    // // commented out to test chess scene
     // scene.Add(&floor);
     // scene.Add(&shortbox);
     // scene.Add(&tallbox);
@@ -100,7 +102,7 @@ int main(int argc, char** argv)
     // scene.Add(new Sphere(Vector3f(450,60,100), 60,
     //                 new Material(GLASS, Vector3f(1))));
 
-    // Vector3f verts[4] = {{0,0,0}, {552.8,0,0}, {549.6, 0,559.2}, {0,0,559.2}};
+    // Vector3f verts[4] = {{0,0,0.0}, {552.8,0,0.0}, {549.6, 0,559.2}, {0,0,559.2}};
     // Vector2f st[4] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
     // uint32_t vertIndex[6] = {0, 2, 1, 2,0,3};
     // Material* mfloor=new Material(DIFFUSE, Vector3f(0));

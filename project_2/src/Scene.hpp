@@ -32,6 +32,14 @@ public:
     // int spp = 16;
     int spp = 64;
 
+    struct Vert {
+        Intersection inter;
+        Vector3f beta;
+        float forwardPDF;
+        float backwardsBDF;
+        bool delta;
+    };
+
     Scene(int w, int h) : width(w), height(h)
     {}
 
@@ -41,7 +49,8 @@ public:
     Intersection intersect(const Ray& ray) const;
     BVHAccel *bvh;
     void buildBVH();
-    Vector3f castRayBidirectional(const Ray &ray, int depth) const;
+    float getLen(Vector3f a, Vector3f b) const;
+    Vector3f castRayBidirectional(const Ray &ray, int depth, int spp) const;
     Vector3f castRay(const Ray &ray, int depth) const;
     void sampleLight(Intersection &pos, float &pdf) const;
     bool trace(const Ray &ray, const std::vector<Object*> &objects, float &tNear, uint32_t &index, Object **hitObject);
