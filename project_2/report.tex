@@ -17,15 +17,76 @@ The specific target for the rendering competition is to accurately recreate an i
 
 \section*{Accomplishments}
 \subsection*{Bidirectional Path Tracing }
-We upgraded the core rendering engine to utilize Bidirectional Path Tracing. In traditional Monte Carlo path tracing, rays are exclusively cast from the camera into the scene. Our implementation improves upon this by simultaneously generating sub-paths from both the camera (eye paths) and the emissive light sources (light paths). The length of both sub-paths is determined stochastically, utilizing Russian Roulette for unbiased termination.
-
+We upgraded the core rendering engine to utilize Bidirectional Path Tracing \cite{Vlnas2018}. In traditional Monte Carlo path tracing, rays are exclusively cast from the camera into the scene. Our implementation improves upon this by simultaneously generating sub-paths from both the camera (eye paths) and the emissive light sources (light paths). The length of both sub-paths is determined stochastically, utilizing Russian Roulette for unbiased termination.
 
 
 \section*{Technical Details}
 
 To evaluate the final pixel color, the integrator attempts to connect the vertices of the camera sub-path with the vertices of the light sub-path. For each attempted connection, a deterministic visibility check (shadow ray) is cast between the two endpoints. If an object occludes the line of sight between the vertices, no color contribution is added for that specific connection. If the path is unoccluded, the radiance is evaluated and accumulated similarly to standard Monte Carlo integration. 
 
-To maximize sampling efficiency, path vertices are reused. For example, if a camera path generates three distinct hit points before termination, the engine evaluates connections from \textit{each} of those three hit points to the available light path vertices. The resulting color contributions are then averaged to form the final pixel estimate.
+\subsection*{Path Tracing vs. Bidirectional Path Tracing}
+
+In standard unidirectional Path Tracing, the rendering equation is integrated exclusively by gathering light. Rays are cast from the camera into the scene, scattering at surfaces according to the material's BRDF until they randomly intersect an emissive light source or terminate via Russian Roulette. The final color at a surface is evaluated by accumulating the emitted radiance from the final hit point, attenuated by the material reflectance and geometric terms along the reverse path. However, this Monte Carlo integration method often struggles with complex indirect lighting, leading to high variance (noise) because camera paths rarely hit the light source purely by chance.
+
+The rendering equation used to describe traditional path tracing 
+\begin{equation}\label{eq:rendering}
+    L_o(p, \omega_o) = L_e(p, \omega_o) + \int_{\Omega} f_r(p, \omega_i, \omega_o) L_i(p, \omega_i) (\omega_i \cdot n) \, d\omega_i
+\end{equation}
+The previous equation is evaluated in Recursively. A ray can be traced from the camera eye into the nearest hit point $x$, then sample a new direction $\omega_i$ above $x$ and repeat these steps until  some kind of termination condition, such as Russian roulette,
+
+The rendering equation (\ref{eq:rendering}) can be transformed into a path integral formulation where instead of integrating over all directions of incoming light over the point $p$ , we integrate over points on the surfaces of objects. 
+
+\begin{equation}\label{eq:rendering_path_integral)}
+	L_p = \int_{D} f_j(\vec{p})  \, dD
+\end{equation}
+where $L_p$ is the radiance that flows through a pixel , $D$ is all possible light paths and $\vec{p}$ is all possible light paths.
+
+This can be approximated using monte-carlo approximation as follows 
+
+
+\begin{equation}\label{eq:rendering_path_integral_monte_carlo)}
+	L_p = \frac{1}{N} \sum_{i=0}^{N}\frac{f_j(\vec{p_i})}{p(\vec{p_i})}
+\end{equation}
+
+where $p(\vec{p_i}) $ is the pdf of sampling path $\vec{p_i}$. The conversion into a pdf with respect to surface area $p(x)$ is written as:
+
+
+\begin{equation}\label{eq:conversion_pdf)}
+	p(x) = p(\omega) \left(\frac{N_{x'} \cdot \vec{x'x''}}{\|x'' - x'\|}\right)
+\end{equation}
+
+where $p{(\omega)}$ is the solid angle. Moreover , We know that 
+\begin{equation}\label{eq:measurement)}
+	L_r(x,\omega_0) = L_{direct} + L_{indirect}
+\end{equation}
+ 
+\ref{eq:measurement)} can be written with conversion to surface area as 
+
+\begin{equation}
+	L_p = \frac{1}{N}\sum_{i=0}^{N}L_{p_i}
+\end{equation}
+
+where $L_{p_i}$ is the radiance of a single sample which is calculated by 
+\begin{equation}
+	L_{p_i} = \sum_{t=0}^{N_E}C_t
+\end{equation}
+Where $C_t$ is the contribution of a single path of length $t$ and $N_E$ is the maximum path length. Applying monte carlo integration on the contribution gives us
+\begin{equation}
+	C_t = \frac{L_e(y_0,\overrightarrow{y_0x_t})}{p(y_0)}f_r(x_t,\overrightarrow{x_ty_0},\overrightarrow{x_tx_{t-1}})G(x_t \leftrightarrow y_0) \prod_{i=1}^{t-1}\frac{f_r(x_i,\overrightarrow{x_ix_{i+1}},\overrightarrow{x_ix_{i-1}}) | N_{x_i} \cdot \overrightarrow{x_ix_{i+1}}}{p(\overrightarrow{x_ix_{i+1}})}
+\end{equation}
+
+The first part of the equation corresponds to the direct lighting from $y_0$ onto  $x_t$,where $L_e(y_0,\overrightarrow{y_0x_t})$, is the amount of radiance from point $y_0$ going in the direction towards $x_t$. Then it is multiplied with the geometric term, and also with the BRDF. The rest of the equation belongs to indirect lighting. It is computed for each point on the path as the product of BRDF and the dot product, divided by the PDF relative to BRDF. 
+
+The geometric coupling term can be defined as 
+
+\begin{equation}
+	G(x \leftrightarrow x') = V(x \leftrightarrow x') \frac{|N_x \cdot \overrightarrow{x'x}||N_{x'} \cdot \overrightarrow{xx'}|}{\|x-x'\|^2}
+\end{equation}
+
+where $V(x \leftrightarrow x')$ is a visibility function, which is equal to 1 if a ray acan be shot directly from point $x$ to $x'$ without hitting anything else, otherwise it is 0
+
+
+
 
 \section*{Rendering Results and Experiments}
 
