@@ -4,3 +4,4 @@ spp,fov,resolution,camera_position,render_time(seconds),fileName
 64,40,256x256,"[0;2.5;-10]",712,viewpoint2.ppm
 4,40,256x256,"[0;1;-12.9]",45,binary_task2.ppm
 64,30,1920x1080,"[0;0.95;-11.5]",4682,r_spp64_fov30_res1920x1080.ppm
+16,40,1920x1080, "[0;0.95;-11.5]",1137,r_spp16_fov40_res1920x1080_bidirectional.ppm

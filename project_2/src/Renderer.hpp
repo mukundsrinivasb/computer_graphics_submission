@@ -15,6 +15,7 @@ struct hit_payload
 class Renderer
 {
 public:
+    bool shadows_on;
     void Render(const Scene& scene);
 
 private:

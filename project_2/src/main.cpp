@@ -49,10 +49,14 @@ int main(int argc, char** argv)
     std::string pawn_path;
     std::string king_path; 
 
+    // Sam: add option for turning shadows on and off
+    bool shadows_on = true;
+
     //Anusha: read user input from command line if provided
-    //Anusha: usage: ./RayTracing <task> <eye_x> <eye_y> <eye_z> <width> <height> <spp> <fov> <king_x> <king_y> <king_z> <king_r> <king_g> <king_b> <lx> <ly> <lz> <bg_r> <bg_g> <bg_b> <light_emission> <dim_light_emission> <wall_r> <wall_g> <wall_b> <smooth>
-    //Anusha: e.g:   ./RayTracing 2 0 1 -12.9 256 256 64 40 0 0 7 0.5 0.4 0 0 0 8 0 0 0 60 30 0.07 0.07 0.07 0
+    //Anusha: usage: ./RayTracing <task> <eye_x> <eye_y> <eye_z> <width> <height> <spp> <fov> <king_x> <king_y> <king_z> <king_r> <king_g> <king_b> <lx> <ly> <lz> <bg_r> <bg_g> <bg_b> <light_emission> <dim_light_emission> <wall_r> <wall_g> <wall_b> <smooth> <shadows_on>
+    //Anusha: e.g:   ./RayTracing 2 0 1 -12.9 256 256 64 40 0 0 7 0.5 0.4 0 0 0 8 0 0 0 60 30 0.07 0.07 0.07 0 1
     //Anusha: smooth: 1 = smooth models (slow), 0 = low poly models (fast for debugging)
+    //Sam: shadows_on: 1 for normal shadow generation, 0 for no shadows
     if (argc >= 5) {
         eye_x = atof(argv[2]);
         eye_y = atof(argv[3]);
@@ -111,6 +115,11 @@ int main(int argc, char** argv)
         smooth = atoi(argv[26]) != 0;
     }
 
+    //Sam: toggle shadows (1 = shadows on, 0 = shadows off)
+    if (argc >= 28) {
+        shadows_on = atoi(argv[27]) != 0;
+    }
+
     //Anusha: print settings so its easy to verify before waiting for the render
     printf("Camera: (%.1f, %.1f, %.1f)  Resolution: %dx%d  SPP: %d  FOV: %.1f\n",
            eye_x, eye_y, eye_z, width, height, spp, fov);
@@ -121,6 +130,7 @@ int main(int argc, char** argv)
     printf("Light emission: %.1f  Dim light emission: %.1f\n", light_emission, dim_light_emission);
     printf("Back wall colour: (%.2f, %.2f, %.2f)\n", wall_r, wall_g, wall_b);
     printf("Smooth models: %s\n", smooth ? "yes" : "no");
+    printf("Shadows on: %s\n", shadows_on ? "yes" : "no");
 
     Scene scene(width, height); 
 
@@ -245,6 +255,8 @@ int main(int argc, char** argv)
     scene.buildBVH();
 
     Renderer r;
+
+
 
     auto start = std::chrono::system_clock::now();
     r.Render(scene);

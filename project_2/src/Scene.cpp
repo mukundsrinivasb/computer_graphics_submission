@@ -43,11 +43,17 @@ float Scene::getLen(Vector3f a, Vector3f b) const {
     return std::sqrt(std::abs(a.x * b.x + a.y * b.y + a.z * b.z));
 }
 
-Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, int spp) const {
+Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, bool shadows_on) const {
     Vector3f hitColor = Vector3f(0);
     auto inter = intersect(ray);  // find the cloest intersection of the ray and the objects
+    while (depth <= maxDepth && inter.happened && inter.material->m_type == DIFF_MIRROR && fresnel(ray.direction.normalized(), inter.normal.normalized(), inter.material->ior) < get_random_float()) {
+        inter = intersect(Ray(inter.coords + inter.normal.normalized() * EPSILON, reflect(ray.direction.normalized(), inter.normal.normalized())));
+        depth++;
+    }
     if (!inter.happened)return backgroundColor;  // if no intersection, return background color
     if (inter.material->hasEmission()) return inter.material->getEmission();
+    
+    
 
     Vector3f hitPoint = inter.coords;  // the intersection point
     Vector3f N = inter.normal.normalized(); // normal
@@ -90,7 +96,6 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, int spp) const {
 
 
     // Create path from camera
-    // Still need to implement glass and mirrors
     Vert start;
     start.inter = inter;
     start.beta = Vector3f(1);
@@ -101,7 +106,6 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, int spp) const {
     ints[numRaysFromCamera] = end;
 
     // Create path from camera
-    // Still need to implement glass and mirrors
     for (int i = 0; i < numRaysFromCamera; i++) {
         N = inter.normal.normalized();
         st = inter.tcoords;
@@ -124,39 +128,12 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, int spp) const {
             w_s[i + 1] = w_;
             cameraInters[i + 1] = inter;
             inter = intersect(Ray(inter.coords + N*EPSILON, w_));
-            //todo: update to work with semi-transparent
-            // while (depth <= maxDepth && inter.happened && (inter.material->m_type == MIRROR || inter.material->m_type == GLASS || inter.material->m_type == DIFF_MIRROR)) {
-            //     float kr = fresnel(w_, inter.normal, inter.material->ior);
-            //     // std::cout << kr << "\n";
-            //     if (inter.material->m_type == MIRROR || get_random_float() > kr || kr > 1) {
-            //         Intersection prevInter = inter;
-            //         w_ = reflect(w_, inter.normal).normalized();
-            //         // std::cout << inter.coords << "\n";
-            //         inter = intersect(Ray(inter.coords + inter.normal * EPSILON, w_));
-            //         // std::cout << inter.coords << "\n\n";
-            //         w_s[i + 1] = w_;
-            //         if (!inter.happened) {
-            //             inter = prevInter;
-            //             numRaysFromCamera = i + 1;
-            //             w_s[i + 1] = w_;
-            //             break;
-            //         }
-            //     }
-            //     else if (inter.material->m_type == DIFF_MIRROR) {
-            //         break;
-            //     }
-            //     else {
-            //         // refract
-            //         w_ = refract(w_,inter.normal,inter.material->ior).normalized();
-            //         Vector3f refractionRayOrigin = (dotProduct(w_,N)<0) ? inter.coords - inter.normal*EPSILON : inter.coords + inter.normal*EPSILON;
-            //         inter = intersect(Ray(refractionRayOrigin, w_));
-            //         w_s[i + 1] = w_;
-            //     }
-            //     depth++;
-            // }
+            while (depth <= maxDepth && inter.happened && inter.material->m_type == DIFF_MIRROR && fresnel(w_, inter.normal.normalized(), inter.material->ior) < get_random_float()) {
+                inter = intersect(Ray(inter.coords + inter.normal.normalized() * EPSILON, reflect(w_, inter.normal.normalized())));
+                depth++;
+            }
             if (!inter.happened) {
                 numRaysFromCamera = i + 1;
-                // std::cout << i + 1 << "\n";
             }
         }
     }
@@ -172,10 +149,13 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, int spp) const {
     float r = std::pow(55, 2);
     lightColors[0] = lightInter.material->getEmission() / (pdf * r / std::abs(dotProduct(lightInter.normal, w_s[totalRaysFromCamera])));
 
-    // std::cout << lightColors[0] << "; " << f << "\n";
     ints[totalRaysFromCamera].beta = lightColors[0];
     if (numRaysFromLight > 1) {
         lightInters[1] = intersect(Ray(lightInter.coords + N*EPSILON, w_s[totalRaysFromCamera]));
+        while (depth <= maxDepth && lightInters[1].happened && lightInters[1].material->m_type == DIFF_MIRROR && fresnel(w_s[totalRaysFromCamera], lightInters[1].normal, lightInters[1].material->ior) < get_random_float()) {
+            lightInters[1] = intersect(Ray(lightInters[1].coords + lightInters[1].normal.normalized() * EPSILON, reflect(w_s[totalRaysFromCamera], lightInters[1].normal.normalized())));
+            depth++;
+        }
         if (!lightInters[1].happened) {
             numRaysFromLight = 1;
         }
@@ -186,15 +166,10 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, int spp) const {
     
 
     for (int i = 1; i < numRaysFromLight; i++) {
-        // inter = lightInters[i];
         N = inter.normal.normalized();
         st = inter.tcoords;
 
         Vector3f w_ = inter.material->sample(w_s[totalRaysFromCamera + i - 1], N).normalized();
-
-        // if (i == 1) {
-        //     std::cout << w_ << "\n";
-        // }
         
         pdf = inter.material->pdf(w_s[totalRaysFromCamera + i - 1], w_, N);
 
@@ -224,32 +199,12 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, int spp) const {
         
         lightInters[i] = inter;
         inter = intersect(Ray(inter.coords + N*EPSILON, w_));
-        // while (depth <= maxDepth && inter.happened && (inter.material->m_type == MIRROR || inter.material->m_type == GLASS || inter.material->m_type == DIFF_MIRROR)) {
-        //     float kr = fresnel(w_, inter.normal, inter.material->ior);
-        //     if (inter.material->m_type == MIRROR || get_random_float() > kr || kr > 1) {
-        //         Intersection prevInter = inter;
-        //         w_ = reflect(w_, inter.normal).normalized();
-        //         inter = intersect(Ray(inter.coords + inter.normal * EPSILON, w_));
-        //         if (!inter.happened) {
-        //             inter = prevInter;
-        //             numRaysFromLight = i + 1;
-        //             break;
-        //         }
-        //     }
-        //     else if (inter.material->m_type == DIFF_MIRROR) {
-        //         break;
-        //     }
-        //     else {
-        //         // refract
-        //         w_ = refract(w_,inter.normal,inter.material->ior).normalized();
-        //         Vector3f refractionRayOrigin = (dotProduct(w_,N)<0) ? inter.coords - inter.normal*EPSILON : inter.coords + inter.normal*EPSILON;
-        //         inter = intersect(Ray(refractionRayOrigin, w_));
-        //     }
-        //     depth++;
-        // }
+        while (depth <= maxDepth && inter.happened && inter.material->m_type == DIFF_MIRROR && fresnel(w_, inter.normal.normalized(), inter.material->ior) < get_random_float()) {
+            inter = intersect(Ray(inter.coords + inter.normal.normalized() * EPSILON, reflect(w_, inter.normal.normalized())));
+            depth++;
+        }
         if (!inter.happened) {
             numRaysFromLight = i + 1;
-            // std::cout << i << "\n";
         }
     }
 
@@ -289,27 +244,7 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, int spp) const {
             Vector3f current_w_ = (lightInters[j].coords - start).normalized();
             Intersection testOccluded = intersect(Ray(start, current_w_));
             Intersection oppositeTest = intersect(Ray(lightInters[j].coords + lightInters[j].normal * EPSILON, -current_w_));
-            // if (testOccluded.happened && testOccluded.obj == lightInters[j].obj) {
-            //     std::cout << std::abs(testOccluded.tnear - oppositeTest.tnear) << "\n";
-            // }
-            if (testOccluded.happened && oppositeTest.happened && std::abs(testOccluded.tnear - oppositeTest.tnear) < 0.1) {
-                // Vector3f color = lightColors[0] + lightInters[0].material->getEmission();
-                // Vector3f color = lightColors[0];
-                // // std::cout << color << "\n";
-                // for (int k = 1; k < j; k++) {
-                //     Vector3f le = lightInters[k].material->hasEmission() ? lightInters[k].material->getEmission() : Vector3f(0);
-                //     color = le + lightColors[k] * color;
-                // }
-
-                // if (i == numRaysFromCamera - 1 && numRaysFromCamera != totalRaysFromCamera) {
-                //     color = backgroundColor * color;
-                // }
-
-                // for (int k = i; k >= 0; k--) {
-                //     Vector3f le = cameraInters[k].material->hasEmission() ? cameraInters[k].material->getEmission() : Vector3f(0);
-                //     color = le + cameraColors[k] * color;
-                // }
-
+            if (!shadows_on || testOccluded.happened && oppositeTest.happened && std::abs(testOccluded.tnear - oppositeTest.tnear) < 0.1) {
                 // go from camera to light
                 cosTheta_ = std::max(0.0f,dotProduct(cameraInters[i].normal,current_w_));
                 if (i == 0) {
@@ -342,13 +277,6 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, int spp) const {
                 pdf *= RussianRoulette;
 
                 Vector3f lightBeta = f * cosTheta_ / std::max(pdf, EPSILON) / RussianRoulette;
-
-                // Vector3f w_ = inter.material->sample(w_s[totalRaysFromCamera + i - 1], N).normalized();
-                // pdf = inter.material->pdf(w_s[totalRaysFromCamera + i - 1], w_, N);
-
-                // if (inter.obj != nullptr){
-                //     albedo = inter.obj->evalDiffuseColor(st);
-                //     f = inter.material->eval(w_,N,albedo);
 
                 Vector3f d = (ints[totalRaysFromCamera + j].inter.coords - ints[i].inter.coords) / 100; // change to 800 for box
 
