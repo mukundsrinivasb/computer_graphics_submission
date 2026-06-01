@@ -1,5 +1,6 @@
 \documentclass[11pt, a4paper]{article}
 \usepackage[margin=0.8in]{geometry}
+\usepackage{amsmath}
 \title{Project Title}
 \author{Sam \and Charlie \and Anusha \and Mukund}
 \date{}
@@ -60,7 +61,7 @@ where $p{(\omega)}$ is the solid angle. Moreover , We know that
 	L_r(x,\omega_0) = L_{direct} + L_{indirect}
 \end{equation}
  
-\ref{eq:measurement)} can be written with conversion to surface area as 
+(\ref{eq:measurement)}) can be written with conversion to surface area as 
 
 \begin{equation}
 	L_p = \frac{1}{N}\sum_{i=0}^{N}L_{p_i}
@@ -71,7 +72,7 @@ where $L_{p_i}$ is the radiance of a single sample which is calculated by
 	L_{p_i} = \sum_{t=0}^{N_E}C_t
 \end{equation}
 Where $C_t$ is the contribution of a single path of length $t$ and $N_E$ is the maximum path length. Applying monte carlo integration on the contribution gives us
-\begin{equation}
+\begin{equation}\label{eq:pathtracer}
 	C_t = \frac{L_e(y_0,\overrightarrow{y_0x_t})}{p(y_0)}f_r(x_t,\overrightarrow{x_ty_0},\overrightarrow{x_tx_{t-1}})G(x_t \leftrightarrow y_0) \prod_{i=1}^{t-1}\frac{f_r(x_i,\overrightarrow{x_ix_{i+1}},\overrightarrow{x_ix_{i-1}}) | N_{x_i} \cdot \overrightarrow{x_ix_{i+1}}}{p(\overrightarrow{x_ix_{i+1}})}
 \end{equation}
 
@@ -85,8 +86,49 @@ The geometric coupling term can be defined as
 
 where $V(x \leftrightarrow x')$ is a visibility function, which is equal to 1 if a ray acan be shot directly from point $x$ to $x'$ without hitting anything else, otherwise it is 0
 
+The light tracing which represents a light path can be written using the path integral framework (\ref{eq:rendering_path_integral)}) as follows
 
+\begin{equation}
+	L_p = \sum_{s=0}^{N_L}C_s \frac {\|P_{pixel} - P_{eye} \|^2}{(\cos{\theta})^2A_{pixel}}
+\end{equation}
 
+where the sum represents path, from point $y_0$ to the maximum path length $N_L$,$C_s$ is the single path contribution and the rest of the equation is the conversion from flux to radiance. Contribution $C_s$ can be computed as
+
+\begin{equation}\label{eq:lighttracing}
+	C_s = \frac{L_e(y_0,\overrightarrow{y_0y_1})}{p(y_0,\overrightarrow{y_0y_1})}f_r(y_s,\overrightarrow{y_sy_{s+1}})G(y_s \leftrightarrow x_0) \frac{W_e(x_0,\overrightarrow{y_tx_0})}{p(x_0)} \left( \prod_{i=1}^{s-1}\frac{f_r(y_i,\overrightarrow{y_iy_{i+1}},\overrightarrow{y_iy_{i-1}})|N_{y_i} \cdot \overrightarrow{y_iy_{i+1}}}{p(\overrightarrow{y_iy_{i+1}})}\right)
+\end{equation}
+
+The first part is the emmitted light $L_e(y_0,\overrightarrow{y_0y_1})$ from the light source at point $y_0$. The PDF $p(y_0,\overrightarrow{y_0y_1})$ is probability of selecting a ray in the direction \overrightarrow{y_0y_1}. Considering a light that has uniform distribution of the emitted light, then probability density function is:
+\begin{equation}
+	p(y_0,\overrightarrow{y_0y_1}) = \frac{1}{A_{light}2\pi}
+\end{equation}
+$y_0$ can be sampled over the light area $A_{light}$ in all directions over the hemisphere above the point $y_0$. $W_e(x_0,\overrightarrow{y_tx_0})$ is the potential of the light ray going straight from the light source to the pixel, which is equal to 1, when the ray is in front of the camera, and when using a pinhole camera $p(x_0)$ is equal to 1 as well, becasue only $x_0$ can be chosen as a point.
+
+The next part $f_r(y_s,\overrightarrow{y_sy_{s+1}},\overrightarrow{y_sy_{s+1}}) G(y_s \leftrightarrow x_0)$ represents a direct ray from $y_s$ to the eye $x_0$. The third part  of the equation is the product of: the BRDF,multiplied with the dot product between normal and direction $\overrightarrow{y_iy_{i+1}}$ and normalized by the PDF.
+
+We have defined both the strategies of ray evaluation, and now Bidirectional path tracing can be defined as 
+
+\begin{equation}
+	L_p = \sum_{s=0}^{N_L}\sum_{t=0}^{N_E} w_{s,t} \cdot C_{s,t}
+\end{equation}
+
+where $C_{s,t}$ is the unweighted contribution of a path with $s$ vertices on the light path and $t$ vertices on the eye path. A visibility check between $s^{th}$ point on the eye path and $t^{th}$ point on the ligth path is a part of the geometric term in contribution function. And finally, $w_{s,t}$ is the weight function.
+
+As it can be seen, evaluation of the $C_{s,t}$ is independent on the eye and light path; therefore, there are four important cases:
+
+\begin{itemize}
+	\item{$s=0,t=0$ light is directly visible from the eye, the evaluation can be done with direct path between eye the point $x_0$ and $y_0$}
+	\item{$s>0,t=0$ in this case use light tracing defined in (\ref{eq:lighttracing}) }
+	\item{$s=0,t>0$ corresponds to the classic path tracing case defined in (\ref{eq:pathtracer}) }
+	\item{$s>0,t>0$ the final case is the evaluation of radiance from the eye path $t$ connected with $s$ vertices of the light path, reaching the pixel, defined as follows}
+\end{itemize}
+
+	\begin{equation}
+		C_{s,t} = \frac{L_e(y_0,\overrightarrow{y_0y_1})}{p(y_0,\overrightarrow{y_0y_1})}G(y_s \leftrightarrow x_t)f_r(x_t,\overrightarrow{x_ty_s},\overrightarrow{x_tx_{t-1}})f_r(y_s,\overrightarrow{y_sy_{s+1}},\overrightarrow{y_sx_t})\left(\prod_{i=1}^{t-1}\frac{f_r(x_i,\overrightarrow{x_ix_{i+1}},\overrightarrow{x_ix_{i-1}})|N_{x_i} \cdot \overrightarrow{x_ix_{i+1}}|}{p(\overrightarrow{x_ix_{i+1}})}
+		\right)
+		\left(\prod_{i=1}^{s-1}\frac{f_r(y_i,\overrightarrow{y_iy_{i+1}},\overrightarrow{y_iy_{i-1}}) | N_{y_i} \cdot \overrightarrow{y_iy_{i+1}}|}{p(\overrightarrow{y_iy_{i+1}})}
+			\right)
+	\end{equation}
 
 \section*{Rendering Results and Experiments}
 
