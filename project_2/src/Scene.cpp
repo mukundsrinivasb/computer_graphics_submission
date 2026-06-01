@@ -338,16 +338,44 @@ Vector3f Scene::castRay(const Ray &ray, int depth, bool shadows_on) const
         Ray reflectionRay(hitPoint + N*EPSILON,reflectionDirection);
         hitColor = castRay(reflectionRay,depth+1, shadows_on) * inter.material->m_color;
     } else if (inter.material->m_type == DIFF_MIRROR) {  // Charlie: if the object is reflective but has its own colour
-        Ray reflectionRay = Ray(hitPoint + N.normalized() * EPSILON, reflect(ray.direction, N.normalized()));
-        Vector3f reflection_color = castRay(reflectionRay, depth + 1, shadows_on);
+        // Emission term Le(x,w)
+        Vector3f le = Vector3f(0);
+        if(inter.material->hasEmission())
+            le = inter.material->getEmission();
+            
+       //Prevent recursion in higher depths 
+        if(get_random_float()>RussianRoulette)
+            return le;
+            
+        //Sample w' from brdf
+        Vector3f w_ = inter.material->sample(dir,N).normalized();
+        float pdf = inter.material->pdf(dir,w_,N);
+        //Evaluate f(w,w')
+        Vector3f albedo = inter.obj->evalDiffuseColor(st);
+        Vector3f f = inter.material->eval(w_,N,albedo);
 
-        //Vector3f phong_color = inter.material->getColor(); // this is a decent backup if the phong rendering still looks wrong 
-        Vector3f phong_color = castRay(ray, maxDepth + 1, shadows_on); // get the normal phong shading for this intersection
+        //Prevent division by zero
+        if(pdf<EPSILON)
+            return le;
+        //cos(thetai)
+        float cosTheta_ = std::max(0.0f,dotProduct(N,w_));
+        //recurse
+        Ray recurseRay(hitPoint+N*EPSILON,w_);
+        Vector3f phong_color = le + ((f*castRay(recurseRay,depth+1, shadows_on) * cosTheta_) / pdf / RussianRoulette);
 
         float kr = fresnel(ray.direction, N, inter.material->ior);
-
-        hitColor =  kr * reflection_color + (1 - kr) * phong_color;
-    
+        if(kr<1){
+            Vector3f reflectionDirection = reflect(ray.direction,N).normalized();
+            Ray reflectionRay(hitPoint + N*EPSILON,reflectionDirection);
+            Vector3f color_reflection = castRay(reflectionRay,depth+1, shadows_on) * inter.material->m_color;
+            //Law of conservation of energy
+            hitColor = phong_color*kr + color_reflection*(1-kr);
+        }
+        else{
+            Vector3f reflectionDirection = reflect(ray.direction,N).normalized();
+            Ray reflectionRay(hitPoint + N*EPSILON,reflectionDirection);
+            hitColor = castRay(reflectionRay,depth+1, shadows_on) * inter.material->m_color;
+        }
     }
 
     return hitColor;
