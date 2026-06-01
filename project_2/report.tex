@@ -186,6 +186,8 @@ The algorithm suggested in \cite{Vlnas2018} was implemented and is as follows:
 	\end{algorithmic}
 \end{algorithm}
 
+Note that semi-reflectivity was handled by giving each ray percentage chance to bounce off of a material based on that material's index of refraction and the angle of incidence. If the ray did not bounce, the material was handled as though it was diffuse. Otherwise, the ray was reflected, and the reflective surface is not added to the list of verticies.
+
 \section*{Rendering Results and Experiments}
 
 
