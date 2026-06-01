@@ -153,11 +153,36 @@ The algorithm suggested in \cite{Vlnas2018} was implemented and is as follows:
 \begin{algorithm}
 \caption{BDPT}
 	\begin{algorithmic}[1] % Remove the [1] if you do not want line numbers
-		\Function{RUN}{scene}
-			define number of light and eye paths to proceed
-		\EndFunction
-		\ForAll{lightpaths}
+		\Function{castRayBidirectional}{scene}
+			define number of light and eye paths using Russian Roulette
+		
+		\ForAll{lightRays and cameraRays}
+            \State $inter \gets intersect(ray)$
+            \State $w\_, p \gets sample(inter)$
+            \State $f = evaluateColor(inter, w\_)$
+            \State $vertex.inter \gets inter$
+            \State $vertex.beta \gets max(0, inter.normal \cdot w\_) \times f \times vertex_{previous}.beta / p / RR$
+            \State $ray \gets ray(inter, w\_)$
 		\EndFor
+        \ForAll{Verticies}
+            \State $p_{s, s+1} \gets \frac{p_{s-1, s} \times (w\__{s+1} \cdot w\__{s}) \times p_{vertex}} {(\|w\__s - w\__{s-1}\|)^2}$
+        \EndFor
+        \State $pSum \gets \sum_{s, t} (p_{camera\_s} \times p_{light\_t})^2$
+        \State $hitColor \gets 0$
+        \ForAll{Camera Verticies}
+            \ForAll{Light Verticies}
+                \If {Nothing blocking between verticies}
+                    \State $w\_ \gets lightVertex.coords - cameraVertex.coords$
+                    \State $\theta \gets max(0, inter.normal \cdot w\_)$
+                    \State $connectingBeta \gets \frac{evaluateColor(cameraVertex, w\_) \times \theta}{p_{cameraVertex} \times RR}$
+                    \State $G \gets \frac{|N_{cameraVertex} \cdot \overrightarrow{lightVertex.coordscameraVertex.coords}||N_{lightVertex.coords} \cdot \overrightarrow{cameraVertex.coordslightVertex.coords}|}{\|lightVertex.coords-cameraVertex.coords\|^2}$
+                    \State $color \gets cameraVertex.beta \times lightVertex.beta \times connectingBeta \times G$
+                    \State $hitColor \gets hitColor + \frac{color \times (p_{cameraVertex} \ times p_{lightVertex})^2}{pSum}$
+                \EndIf
+            \EndFor
+        \EndFor
+        \State return $hitColor$
+        \EndFunction
 	\end{algorithmic}
 \end{algorithm}
 
