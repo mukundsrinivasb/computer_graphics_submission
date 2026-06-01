@@ -41,14 +41,18 @@ void Renderer::Render(const Scene& scene)
         for (uint32_t i = 0; i < scene.width; ++i) {
 
             int m = i + j * scene.width;  // pixel index
-            if(scene.spp==1){
-                // TODO: task 1.1 pixel projection
-                //Anusha: fixed aspect ratio - i divides by width, j divides by height, imageAspectRatio applied to x
-                Ray r = Ray(eye_pos, Vector3f((((float) i + 0.5f) / scene.width * 2 - 1) * scale * imageAspectRatio, (((float) j + 0.5f) / scene.height * 2 - 1) * scale, 1));
-                Vector3f pixel_color = scene.castRayBidirectional(r, 0, shadows_on);
-                framebuffer[framebuffer.size() - 1 - m] = pixel_color;
+            if(!bidirectional){
+                Vector3f total = {0, 0, 0};
+                for (int n = 0; n < scene.spp; n++) {
+                    //Anusha: fixed aspect ratio - i divides by width, j divides by height, imageAspectRatio applied to x
+                    Ray r = Ray(eye_pos, Vector3f((((float) i + get_random_float()) / scene.width * 2 - 1) * scale * imageAspectRatio, 
+                        (((float) j + get_random_float()) / scene.height * 2 - 1) * scale, 1));
+                    Vector3f pixel_color = scene.castRay(r, 0, shadows_on);
+                    total += pixel_color;
+                }
+                
+                framebuffer[framebuffer.size() - 1 - m] = total / scene.spp;
             }else {
-                // TODO: task 2 multi-sampling (anti-aliasing)
                 Vector3f total = {0, 0, 0};
                 for (int n = 0; n < scene.spp; n++) {
                     //Anusha: fixed aspect ratio - i divides by width, j divides by height, imageAspectRatio applied to x
@@ -68,10 +72,10 @@ void Renderer::Render(const Scene& scene)
 
     // save framebuffer to file
     std::stringstream ss;
-    ss << "binary_task" << TASK_N<<".ppm";
+    ss << "r_spp" << scene.spp << "_fov" << scene.fov << "_res" << scene.width << "x" << scene.height << (bidirectional ? "_bidirectional.ppm" : ".ppm");
     std::string str = ss.str();
     const char* file_name = str.c_str();
-    std::cout << "Storing to file" << file_name << "\n";
+    std::cout << "Storing to file " << file_name << "\n";
     FILE* fp = fopen(file_name, "wb");
     (void)fprintf(fp, "P6\n%d %d\n255\n", scene.width, scene.height);
     for (auto i = 0; i < scene.height * scene.width; ++i) {

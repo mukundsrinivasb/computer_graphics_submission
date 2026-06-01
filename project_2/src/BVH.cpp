@@ -20,16 +20,11 @@ BVHAccel::BVHAccel(std::vector<Object*> p, int maxPrimsInNode,
     int hrs = (int)diff / 3600;
     int mins = ((int)diff / 60) - (hrs * 60);
     int secs = (int)diff - (hrs * 3600) - (mins * 60);
-
-    printf(
-        "\rBVH Generation complete: \nTime Taken: %i hrs, %i mins, %i secs\n\n",
-        hrs, mins, secs);
 }
 
 BVHBuildNode* BVHAccel::recursiveBuild(std::vector<Object*> objects, int dim)
 {
     BVHBuildNode *node = new BVHBuildNode();
-    // TODO: task 1.2 BVH algorithm starts here
     Bounds3 bounds;
     for (int i = 0; i < objects.size(); ++i)
         bounds = Union(bounds, objects[i]->getBounds());
@@ -103,17 +98,6 @@ Intersection BVHAccel::Intersect(const Ray& ray) const
 
 Intersection BVHAccel::getIntersection(BVHBuildNode* node, const Ray& ray) const
 {
-
-    // TODO: task 1.2 BVH algorithm starts here
-    // Skip BVH if it's Task 1.1 (basic ray tracing without BVH)
-    if (TASK_N == 1.1f) {
-        if (node->left == nullptr && node->right == nullptr)
-            return node->object->getIntersection(ray);
-        Intersection left  = getIntersection(node->left, ray);
-        Intersection right = getIntersection(node->right, ray);
-        return left.tnear < right.tnear ? left : right;
-    }
-
     Intersection inter;
     Vector3f indiv(1.0f/(ray.direction[0]==0?0.00001:ray.direction[0]),
                    1.0f/(ray.direction[1]==0?0.00001:ray.direction[1]),

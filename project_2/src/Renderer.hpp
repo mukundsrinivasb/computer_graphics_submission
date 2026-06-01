@@ -16,6 +16,7 @@ class Renderer
 {
 public:
     bool shadows_on;
+    bool bidirectional;
     void Render(const Scene& scene);
 
 private:

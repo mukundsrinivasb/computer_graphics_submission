@@ -32,12 +32,10 @@ public:
     // int spp = 16;
     int spp = 64;
 
+    // Stores intersections connected and their beta values (for calculating colors)
     struct Vert {
         Intersection inter;
         Vector3f beta;
-        float forwardPDF;
-        float backwardsBDF;
-        bool delta;
     };
 
     Scene(int w, int h) : width(w), height(h)
@@ -51,7 +49,7 @@ public:
     void buildBVH();
     float getLen(Vector3f a, Vector3f b) const;
     Vector3f castRayBidirectional(const Ray &ray, int depth, bool shadows_on) const;
-    Vector3f castRay(const Ray &ray, int depth) const;
+    Vector3f castRay(const Ray &ray, int depth, bool shadows_on) const;
     void sampleLight(Intersection &pos, float &pdf) const;
     bool trace(const Ray &ray, const std::vector<Object*> &objects, float &tNear, uint32_t &index, Object **hitObject);
 

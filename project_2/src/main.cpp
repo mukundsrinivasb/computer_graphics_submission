@@ -6,17 +6,12 @@
 #include "global.hpp"
 #include <chrono>
 
-float TASK_N=2; // 1.1, 1.2, 1.3, 2
-
 // In the main function of the program, we create the scene (create objects and
 // lights) as well as set the options for the render (image width and height,
 // maximum recursion depth, field-of-view, etc.). We then call the render
 // function().
 int main(int argc, char** argv)
 {
-    if (argc>=2)
-        TASK_N=(float)atof(argv[1]);
-
     // Charlie: new camera defaults
     float eye_x = 0, eye_y = 0.95, eye_z = -11.5; 
 
@@ -29,7 +24,7 @@ int main(int argc, char** argv)
     float king_x = 0, king_y = 0, king_z = 7;
 
     //Anusha: king material colour defaults (gold)
-    float king_r = 0.5, king_g = 0.4, king_b = 0;
+    float king_r = 0.27, king_g = 0.25, king_b = 0.12;
 
     //Anusha: light_middle position defaults
     float lx = 0, ly = 0, lz = 8;
@@ -38,8 +33,8 @@ int main(int argc, char** argv)
     float bg_r = 0, bg_g = 0, bg_b = 0;
 
     //Anusha: light emission strength defaults
-    float light_emission = 60;
-    float dim_light_emission = 30;
+    float light_emission = 400;
+    float dim_light_emission = 100;
 
     //Anusha: back wall colour defaults (dark grey, same as original)
     float wall_r = 0.07, wall_g = 0.07, wall_b = 0.07;
@@ -52,73 +47,82 @@ int main(int argc, char** argv)
     // Sam: add option for turning shadows on and off
     bool shadows_on = true;
 
+    // Sam: option to use regular path-tracing or bidirectional path-tracing
+    bool bidirectional = true;
+
     //Anusha: read user input from command line if provided
-    //Anusha: usage: ./RayTracing <task> <eye_x> <eye_y> <eye_z> <width> <height> <spp> <fov> <king_x> <king_y> <king_z> <king_r> <king_g> <king_b> <lx> <ly> <lz> <bg_r> <bg_g> <bg_b> <light_emission> <dim_light_emission> <wall_r> <wall_g> <wall_b> <smooth> <shadows_on>
-    //Anusha: e.g:   ./RayTracing 2 0 1 -12.9 256 256 64 40 0 0 7 0.5 0.4 0 0 0 8 0 0 0 60 30 0.07 0.07 0.07 0 1
+    //Anusha: usage: ./RayTracing <eye_x> <eye_y> <eye_z> <width> <height> <spp> <fov> <king_x> <king_y> <king_z> <king_r> <king_g> <king_b> <lx> <ly> <lz> <bg_r> <bg_g> <bg_b> <light_emission> <dim_light_emission> <wall_r> <wall_g> <wall_b> <smooth> <shadows_on> <bidirectional>
+    //Anusha: e.g:   ./RayTracing 0 1 -12.9 256 256 64 40 0 0 7 0.5 0.4 0 0 0 8 0 0 0 60 30 0.07 0.07 0.07 0 1 1
     //Anusha: smooth: 1 = smooth models (slow), 0 = low poly models (fast for debugging)
     //Sam: shadows_on: 1 for normal shadow generation, 0 for no shadows
-    if (argc >= 5) {
-        eye_x = atof(argv[2]);
-        eye_y = atof(argv[3]);
-        eye_z = atof(argv[4]);
+    if (argc >= 4) {
+        eye_x = atof(argv[1]);
+        eye_y = atof(argv[2]);
+        eye_z = atof(argv[3]);
     }
-    if (argc >= 7) {
-        width  = atoi(argv[5]);
-        height = atoi(argv[6]);
+    if (argc >= 6) {
+        width  = atoi(argv[4]);
+        height = atoi(argv[5]);
     }
-    if (argc >= 8) spp = atoi(argv[7]);
-    if (argc >= 9) fov = atof(argv[8]);
+    if (argc >= 7) spp = atoi(argv[6]);
+    if (argc >= 8) fov = atof(argv[7]);
 
     //Anusha: king position from command line
-    if (argc >= 12) {
-        king_x = atof(argv[9]);
-        king_y = atof(argv[10]);
-        king_z = atof(argv[11]);
+    if (argc >= 11) {
+        king_x = atof(argv[8]);
+        king_y = atof(argv[9]);
+        king_z = atof(argv[10]);
     }
 
     //Anusha: king material colour from command line
-    if (argc >= 15) {
-        king_r = atof(argv[12]);
-        king_g = atof(argv[13]);
-        king_b = atof(argv[14]);
+    if (argc >= 14) {
+        king_r = atof(argv[11]);
+        king_g = atof(argv[12]);
+        king_b = atof(argv[13]);
     }
 
     //Anusha: light position from command line
-    if (argc >= 18) {
-        lx = atof(argv[15]);
-        ly = atof(argv[16]);
-        lz = atof(argv[17]);
+    if (argc >= 17) {
+        lx = atof(argv[14]);
+        ly = atof(argv[15]);
+        lz = atof(argv[16]);
     }
 
     //Anusha: background colour from command line
-    if (argc >= 21) {
-        bg_r = atof(argv[18]);
-        bg_g = atof(argv[19]);
-        bg_b = atof(argv[20]);
+    if (argc >= 20) {
+        bg_r = atof(argv[17]);
+        bg_g = atof(argv[18]);
+        bg_b = atof(argv[19]);
     }
 
     //Anusha: light emission strength from command line
-    if (argc >= 23) {
-        light_emission = atof(argv[21]);
-        dim_light_emission = atof(argv[22]);
+    if (argc >= 22) {
+        light_emission = atof(argv[20]);
+        dim_light_emission = atof(argv[21]);
     }
 
     //Anusha: back wall colour from command line
-    if (argc >= 26) {
-        wall_r = atof(argv[23]);
-        wall_g = atof(argv[24]);
-        wall_b = atof(argv[25]);
+    if (argc >= 25) {
+        wall_r = atof(argv[22]);
+        wall_g = atof(argv[23]);
+        wall_b = atof(argv[24]);
     }
 
     //Anusha: smooth model toggle from command line (1 = smooth, 0 = low poly)
-    if (argc >= 27) {
-        smooth = atoi(argv[26]) != 0;
+    if (argc >= 26) {
+        smooth = atoi(argv[25]) != 0;
     }
 
     //Sam: toggle shadows (1 = shadows on, 0 = shadows off)
-    if (argc >= 28) {
-        shadows_on = atoi(argv[27]) != 0;
+    if (argc >= 27) {
+        shadows_on = atoi(argv[26]) != 0;
     }
+
+    //Sam: toggle type of path tracing (1 = bidirectional, 0 = regular)
+    if (argc >= 28) {
+        bidirectional = atoi(argv[27]) != 0;
+    }
+
 
     //Anusha: print settings so its easy to verify before waiting for the render
     printf("Camera: (%.1f, %.1f, %.1f)  Resolution: %dx%d  SPP: %d  FOV: %.1f\n",
@@ -131,6 +135,7 @@ int main(int argc, char** argv)
     printf("Back wall colour: (%.2f, %.2f, %.2f)\n", wall_r, wall_g, wall_b);
     printf("Smooth models: %s\n", smooth ? "yes" : "no");
     printf("Shadows on: %s\n", shadows_on ? "yes" : "no");
+    printf("Type of path tracing: %s\n", bidirectional ? "bidirectional" : "regular");
 
     Scene scene(width, height); 
 
@@ -152,7 +157,7 @@ int main(int argc, char** argv)
     gold->Kd=0.8;
     gold->Ks=0.2;
     gold->specularExponent=32;
-    gold->ior=5; // higher number = more reflection, not refraction (this is just a note to self)
+    gold->ior=8; // higher number = more reflection, not refraction (this is just a note to self)
 
     Material* mirror_tile = new Material(DIFF_MIRROR, Vector3f(0.03, 0.03, 0.03)); //working
     mirror_tile->Kd=1;
@@ -169,13 +174,13 @@ int main(int argc, char** argv)
     diffuse_tile->Kd=0.7;
     diffuse_tile->Ks=0.3;
 
-    Material* dark_pawn = new Material(DIFF_MIRROR, Vector3f(0.00, 0.00, 0.00)); // working
+    Material* dark_pawn = new Material(DIFF_MIRROR, Vector3f(0.07, 0.07, 0.07)); // working
     dark_pawn->Kd=0.9;
     dark_pawn->Ks=0.1;
     dark_pawn->specularExponent=1;
     dark_pawn->ior=1.1; // 1.1
 
-    Material* light_pawn = new Material(DIFF_MIRROR, Vector3f(0.8, 0.8, 0.8)); // working
+    Material* light_pawn = new Material(DIFF_MIRROR, Vector3f(0.6, 0.6, 0.6)); // working
     light_pawn->Kd=0.5; 
     light_pawn->Ks=0.5;
     light_pawn->specularExponent=100;
@@ -259,6 +264,8 @@ int main(int argc, char** argv)
 
 
     auto start = std::chrono::system_clock::now();
+    r.shadows_on = shadows_on;
+    r.bidirectional = bidirectional;
     r.Render(scene);
     auto stop = std::chrono::system_clock::now();
 
