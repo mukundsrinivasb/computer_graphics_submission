@@ -75,8 +75,6 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, bool shadows_on)
     w_s[0] = ray.direction;
     ints[totalRaysFromCamera].inter = lightInter;
 
-    Vector3f cameraColors[numRaysFromCamera];
-    Vector3f lightColors[numRaysFromLight];
     Vector2f st; // texture coordinates (u, v)
     Vector3f N; // normal
 
@@ -104,9 +102,8 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, bool shadows_on)
         Vector3f albedo = inter.obj->evalDiffuseColor(st);
         Vector3f f = inter.material->eval(w_,N,albedo);
         float cosTheta_ = std::max(0.0f,dotProduct(N,w_));
-        cameraColors[i] = f * cosTheta_ / pdf / RussianRoulette;
 
-        ints[i].beta = ints[std::max(0, i - 1)].beta * cameraColors[i];
+        ints[i].beta = ints[std::max(0, i - 1)].beta * f * cosTheta_ / pdf / RussianRoulette;
         // ints[i].inter = inter;
 
         if (i < numRaysFromCamera - 1) {
@@ -133,8 +130,7 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, bool shadows_on)
     Vector3f f = lightInter.material->eval(w_s[totalRaysFromCamera],N,albedo);
     float cosTheta_ = std::max(0.0f,dotProduct(N,w_s[totalRaysFromCamera]));
     float r = std::pow(55, 2);
-    lightColors[0] = lightInter.material->getEmission() / (pdf * r / std::abs(dotProduct(lightInter.normal, w_s[totalRaysFromCamera])));
-    ints[totalRaysFromCamera].beta = lightColors[0];
+    ints[totalRaysFromCamera].beta = lightInter.material->getEmission() / (pdf * r / std::abs(dotProduct(lightInter.normal, w_s[totalRaysFromCamera])));
 
     // Create first path from light
     if (numRaysFromLight > 1) {
@@ -170,8 +166,7 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, bool shadows_on)
 
         // calculate color
         cosTheta_ = std::max(0.0f,dotProduct(N,w_));
-        lightColors[i] = f * cosTheta_ / pdf / RussianRoulette;
-        ints[totalRaysFromCamera + i].beta = ints[totalRaysFromCamera + std::max(0, i - 1)].beta * lightColors[i];
+        ints[totalRaysFromCamera + i].beta = ints[totalRaysFromCamera + std::max(0, i - 1)].beta * f * cosTheta_ / pdf / RussianRoulette;
 
         w_s[totalRaysFromCamera + i] = w_;
         ints[totalRaysFromCamera + i].inter = inter;
