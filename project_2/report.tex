@@ -3,7 +3,31 @@
 \usepackage{amsmath} 
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{placeins}
+\usepackage{graphicx}
 
+
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red},
+    commentstyle=\color{green!60!black},
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=10pt,
+    backgroundcolor=\color{gray!5},
+    showspaces=false,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    captionpos=b,
+    tabsize=4,
+    escapeinside={(*@}{@*)}
+}
 \title{Project Title}
 \author{Sam \and Charlie \and Anusha \and Mukund}
 \date{}
@@ -23,14 +47,31 @@ The specific target for the rendering competition is to accurately recreate an i
 \subsection*{Bidirectional Path Tracing }
 We upgraded the core rendering engine to utilize Bidirectional Path Tracing \cite{Vlnas2018}. In traditional Monte Carlo path tracing, rays are exclusively cast from the camera into the scene. Our implementation improves upon this by simultaneously generating sub-paths from both the camera (eye paths) and the emissive light sources (light paths). The length of both sub-paths is determined stochastically, utilizing Russian Roulette for unbiased termination.
 
+\subsection*{Custom Scene Reconstruction and Material Formulation}
+To accurately replicate the reference image \cite{dartmouth_rendering}, the chess pieces and environment were modeled entirely from scratch rather than relying on pre-existing assets. The scene was meticulously arranged to match the exact framing and composition of the original photograph. Furthermore, to capture the distinct reflective properties of the various surfaces—such as the highly reflective floor tiles and the differing varnishes on the light and dark chess pieces—a novel hybrid material model, \texttt{DIFF\_MIRROR}, was formulated. This custom material successfully bridges the gap between perfectly specular and purely diffuse surfaces to render complex specular highlights.
+
+\subsection*{Dynamic Scene Configuration via Command-Line Interface}
+To optimize rendering efficiency and workflow flexibility, the system was extended to support dynamic scene configuration at runtime. Instead of relying on static, hardcoded parameters that require recompilation for every adjustment, critical rendering variables—such as camera position, image resolution, samples per pixel (SPP), and field of view (FOV)—can now be specified directly via command-line arguments. This enhancement significantly streamlined the rendering process, eliminating code clutter and allowing for the rapid, iterative generation of multiple required viewpoints from a single compiled executable.
+
+\newpage
 
 \section*{Technical Details}
 
-To evaluate the final pixel color, the integrator attempts to connect the vertices of the camera sub-path with the vertices of the light sub-path. For each attempted connection, a deterministic visibility check (shadow ray) is cast between the two endpoints. If an object occludes the line of sight between the vertices, no color contribution is added for that specific connection. If the path is unoccluded, the radiance is evaluated and accumulated similarly to standard Monte Carlo integration. 
 
-\subsection*{Path Tracing vs. Bidirectional Path Tracing}
 
-In standard unidirectional Path Tracing, the rendering equation is integrated exclusively by gathering light. Rays are cast from the camera into the scene, scattering at surfaces according to the material's BRDF until they randomly intersect an emissive light source or terminate via Russian Roulette. The final color at a surface is evaluated by accumulating the emitted radiance from the final hit point, attenuated by the material reflectance and geometric terms along the reverse path. However, this Monte Carlo integration method often struggles with complex indirect lighting, leading to high variance (noise) because camera paths rarely hit the light source purely by chance.
+\subsection*{Bidirectional Path Tracing}
+
+In standard unidirectional Path Tracing, the rendering equation is integrated exclusively by gathering light. Rays are cast from the camera into the scene, scattering at surfaces according to the material's BRDF until they randomly intersect an emissive light source or terminate via Russian Roulette. The final color at a surface is evaluated by accumulating the emitted radiance from the final hit point, attenuated by the material reflectance and geometric terms along the reverse path. However, this Monte Carlo integration method often struggles with complex indirect lighting, leading to high variance (noise) because camera paths rarely hit the light source purely by chance \cite{Vlnas2018}.
+
+To evaluate the final pixel color using Bidirectional path tracing the integrator attempts to connect the vertices of the camera sub-path with the vertices of the light sub-path. For each attempted connection, a deterministic visibility check (shadow ray) is cast between the two endpoints. If an object occludes the line of sight between the vertices, no color contribution is added for that specific connection. If the path is unoccluded, the radiance is evaluated and accumulated similarly to standard Monte Carlo integration. 
+\begin{figure}[htbp]
+    \centering
+    % Replace 'bdpt_illustration.png' with your actual file name
+    % width=0.8\textwidth scales it to 80% of the page width
+    \includegraphics[width=0.8\textwidth]{bidir_illustration.png}
+    \caption{An illustration of Bidirectional Path Tracing. Sub-paths are generated simultaneously from both the camera (eye paths) and the emissive light sources (light paths), which are then connected to evaluate the final radiance.}
+    \label{fig:bdpt_diagram}
+\end{figure}
 
 The rendering equation used to describe traditional path tracing 
 \begin{equation}\label{eq:rendering}
@@ -150,9 +191,9 @@ where $p_i$ is defined as the density for generating path $x_{s,t}$ using $i$ su
 
 The algorithm suggested in \cite{Vlnas2018} was implemented and is as follows:
 
-\begin{algorithm}
+\begin{algorithm}[H]
 \caption{BDPT}
-	\begin{algorithmic}[1] % Remove the [1] if you do not want line numbers
+	\begin{algorithmic}
 		\Function{castRayBidirectional}{scene}
 			define number of light and eye paths using Russian Roulette
 		
@@ -185,8 +226,257 @@ The algorithm suggested in \cite{Vlnas2018} was implemented and is as follows:
         \EndFunction
 	\end{algorithmic}
 \end{algorithm}
-
+\FloatBarrier
+\pagebreak
 Note that semi-reflectivity was handled by giving each ray percentage chance to bounce off of a material based on that material's index of refraction and the angle of incidence. If the ray did not bounce, the material was handled as though it was diffuse. Otherwise, the ray was reflected, and the reflective surface is not added to the list of verticies.
+
+The implementation in C++ is as follows
+\begin{lstlisting}[caption={Bidirectional Path Tracing Implementation - \texttt{castRayBidirectional}}, label={lst:bdpt}]
+Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, bool shadows_on) const {
+    Vector3f hitColor = Vector3f(0);
+    auto inter = intersect(ray);  // find the cloest intersection of the ray and the objects
+    while (depth <= maxDepth && inter.happened && inter.material->m_type == DIFF_MIRROR && fresnel(ray.direction.normalized(), inter.normal.normalized(), inter.material->ior) < get_random_float()) {
+        inter = intersect(Ray(inter.coords + inter.normal.normalized() * EPSILON, reflect(ray.direction.normalized(), inter.normal.normalized())));
+        depth++;
+    }
+    if (!inter.happened)return backgroundColor;  // if no intersection, return background color
+    if (inter.material->hasEmission()) return inter.material->getEmission();
+
+    int numRaysFromLight = 1;
+    while (get_random_float() <= RussianRoulette) {
+        numRaysFromLight++;
+    }
+
+    int numRaysFromCamera = 1;
+    while (get_random_float() <= RussianRoulette) {
+        numRaysFromCamera++;
+    }
+
+    // Determine start of light's path
+    Intersection lightInter;
+    float lightPdf;
+    sampleLight(lightInter, lightPdf);
+
+    Vert ints[numRaysFromCamera + numRaysFromLight]; // Intersections/beta values of both the path from the camera and the path from the light
+
+    Vector3f w_s[numRaysFromCamera + numRaysFromLight]; // Incoming w_ value for each intersection
+    int totalRaysFromCamera = numRaysFromCamera;
+    ints[0].inter = inter;
+    w_s[0] = ray.direction;
+    ints[totalRaysFromCamera].inter = lightInter;
+
+    Vector2f st; // texture coordinates (u, v)
+    Vector3f N; // normal
+
+    // Start path from camera
+    Vert start;
+    start.inter = inter;
+    start.beta = Vector3f(1);
+    ints[0] = start;
+
+    // Start path from light (light path starts with light at index numRaysFromCamera and increases from there)
+    Vert end;
+    end.inter = lightInter;
+    ints[numRaysFromCamera] = end;
+
+    // Create path from camera
+    for (int i = 0; i < numRaysFromCamera; i++) {
+        N = inter.normal.normalized();
+        st = inter.tcoords;
+
+        // outgoing w_
+        Vector3f w_ = inter.material->sample(w_s[i], N).normalized();
+        float pdf = inter.material->pdf(w_s[i], w_, N);
+
+        // calculate color
+        Vector3f albedo = inter.obj->evalDiffuseColor(st);
+        Vector3f f = inter.material->eval(w_,N,albedo);
+        float cosTheta_ = std::max(0.0f,dotProduct(N,w_));
+
+        ints[i].beta = ints[std::max(0, i - 1)].beta * f * cosTheta_ / pdf / RussianRoulette;
+        // ints[i].inter = inter;
+
+        if (i < numRaysFromCamera - 1) {
+            // Calculate next intersection
+            w_s[i + 1] = w_;
+            ints[i + 1].inter = inter;
+            inter = intersect(Ray(inter.coords + N*EPSILON, w_));
+            while (depth <= maxDepth && inter.happened && inter.material->m_type == DIFF_MIRROR && fresnel(w_, inter.normal.normalized(), inter.material->ior) < get_random_float()) {
+                inter = intersect(Ray(inter.coords + inter.normal.normalized() * EPSILON, reflect(w_, inter.normal.normalized())));
+                depth++;
+            }
+            if (!inter.happened) {
+                numRaysFromCamera = i + 1;
+            }
+        }
+    }
+
+
+    // Calculate color of light
+    N = lightInter.normal.normalized();
+    w_s[totalRaysFromCamera] = lightInter.material->sample(-N, N).normalized();
+    float pdf = lightInter.material->pdf(-N, w_s[totalRaysFromCamera], N);
+    Vector3f albedo = lightInter.obj->evalDiffuseColor(lightInter.tcoords);
+    Vector3f f = lightInter.material->eval(w_s[totalRaysFromCamera],N,albedo);
+    float cosTheta_ = std::max(0.0f,dotProduct(N,w_s[totalRaysFromCamera]));
+    float r = std::pow(55, 2);
+    ints[totalRaysFromCamera].beta = lightInter.material->getEmission() / (pdf * r / std::abs(dotProduct(lightInter.normal, w_s[totalRaysFromCamera])));
+
+    // Create first path from light
+    if (numRaysFromLight > 1) {
+        ints[totalRaysFromCamera + 1].inter = intersect(Ray(lightInter.coords + N*EPSILON, w_s[totalRaysFromCamera]));
+        while (depth <= maxDepth && ints[totalRaysFromCamera + 1].inter.happened && ints[totalRaysFromCamera + 1].inter.material->m_type == DIFF_MIRROR && fresnel(w_s[totalRaysFromCamera], ints[totalRaysFromCamera + 1].inter.normal, ints[totalRaysFromCamera + 1].inter.material->ior) < get_random_float()) {
+            ints[totalRaysFromCamera + 1].inter = intersect(Ray(ints[totalRaysFromCamera + 1].inter.coords + ints[totalRaysFromCamera + 1].inter.normal.normalized() * EPSILON, reflect(w_s[totalRaysFromCamera], ints[totalRaysFromCamera + 1].inter.normal.normalized())));
+            depth++;
+        }
+        if (!ints[totalRaysFromCamera + 1].inter.happened) {
+            numRaysFromLight = 1;
+        }
+        inter = ints[totalRaysFromCamera + 1].inter;
+    }
+
+    // Calculate rest of path from light
+    for (int i = 1; i < numRaysFromLight; i++) {
+        N = inter.normal.normalized();
+        st = inter.tcoords;
+
+        // outgoing w_
+        Vector3f w_ = inter.material->sample(w_s[totalRaysFromCamera + i - 1], N).normalized();
+        
+        pdf = inter.material->pdf(w_s[totalRaysFromCamera + i - 1], w_, N);
+
+        // Fix for weird error where intersection had no object associated with it
+        if (inter.obj != nullptr){
+            albedo = inter.obj->evalDiffuseColor(st);
+            f = inter.material->eval(w_,N,albedo);
+        }
+        else {
+            f = Vector3f(0.156,0.25,0.268);
+        }
+
+        // calculate color
+        cosTheta_ = std::max(0.0f,dotProduct(N,w_));
+        ints[totalRaysFromCamera + i].beta = ints[totalRaysFromCamera + std::max(0, i - 1)].beta * f * cosTheta_ / pdf / RussianRoulette;
+
+        w_s[totalRaysFromCamera + i] = w_;
+        ints[totalRaysFromCamera + i].inter = inter;
+
+        // calculate next intersection
+        inter = intersect(Ray(inter.coords + N*EPSILON, w_));
+        while (depth <= maxDepth && inter.happened && inter.material->m_type == DIFF_MIRROR && fresnel(w_, inter.normal.normalized(), inter.material->ior) < get_random_float()) {
+            inter = intersect(Ray(inter.coords + inter.normal.normalized() * EPSILON, reflect(w_, inter.normal.normalized())));
+            depth++;
+        }
+        if (!inter.happened) {
+            numRaysFromLight = i + 1;
+        }
+    }
+
+    // Calculate probabilities for MIS
+    Intersection dummy;
+    float camera_ps[numRaysFromCamera];
+    float light_ps[numRaysFromLight];
+    ints[0].inter.obj->Sample(dummy, pdf);
+    camera_ps[0] = pdf;
+
+    for (int i = 1; i < numRaysFromCamera; i++) {
+        camera_ps[i] = camera_ps[i-1] * dotProduct(w_s[i], w_s[i-1]) / std::powf(getLen(w_s[i], w_s[i-1]), 2) * ints[i].inter.material->pdf(w_s[i-1], w_s[i], ints[i].inter.normal);
+    }
+
+    light_ps[0] = lightPdf;
+    for (int i = 1; i < numRaysFromLight; i++) {
+        light_ps[i] = light_ps[i - 1] * dotProduct(w_s[totalRaysFromCamera + i], w_s[totalRaysFromCamera + i - 1]) / 
+            std::powf(getLen(w_s[totalRaysFromCamera + i], w_s[totalRaysFromCamera + i - 1]), 2) * ints[totalRaysFromCamera + i].inter.material->pdf(w_s[totalRaysFromCamera + i-1], w_s[totalRaysFromCamera + i], ints[totalRaysFromCamera + i].inter.normal);
+    }
+
+    // Calculate sum of squares
+    float pSum = 0;
+
+    for (int i = 0; i < numRaysFromCamera; i++) {
+        for (int j = 0; j < numRaysFromLight; j++) {
+            pSum += std::powf(camera_ps[i] * light_ps[j], 2);
+        }
+    }
+
+
+    // Calculate final color
+    for (int i = 0; i < numRaysFromCamera; i++) {
+        for (int j = 0; j < numRaysFromLight; j++) {
+            Vector3f start = ints[i].inter.coords + ints[i].inter.normal.normalized() * EPSILON;
+            Vector3f current_w_ = (ints[totalRaysFromCamera + j].inter.coords - start).normalized();
+            Intersection testOccluded = intersect(Ray(start, current_w_));
+            Intersection oppositeTest = intersect(Ray(ints[totalRaysFromCamera + j].inter.coords + ints[totalRaysFromCamera + j].inter.normal * EPSILON, -current_w_));
+            if (!shadows_on || testOccluded.happened && oppositeTest.happened && std::abs(testOccluded.tnear - oppositeTest.tnear) < 0.1) {
+                // calculate beta value of connection from camera to light
+                cosTheta_ = std::max(0.0f,dotProduct(ints[i].inter.normal,current_w_));
+                if (i == 0) {
+                    pdf = ints[i].inter.material->pdf(ray.direction, current_w_, ints[i].inter.normal);
+                }
+                else {
+                    pdf = ints[i].inter.material->pdf(w_s[i-1], current_w_, ints[i].inter.normal);
+                }
+
+                albedo = ints[i].inter.obj->evalDiffuseColor(ints[i].inter.tcoords);
+                f = ints[i].inter.material->eval(current_w_,ints[i].inter.normal,albedo);
+                if (pdf < EPSILON) {
+                    continue;
+                }
+
+                Vector3f cameraBeta = f * cosTheta_ / std::max(pdf, EPSILON) / RussianRoulette;
+
+                // Calculate geometry term
+                Vector3f d = (ints[totalRaysFromCamera + j].inter.coords - ints[i].inter.coords) / 100;
+                float distSquared = dotProduct(d, d);
+                float dist = sqrt(distSquared);
+                d = d / dist;
+                float G = std::abs(dotProduct(ints[i].inter.normal, d)) * abs(dotProduct(ints[totalRaysFromCamera + j].inter.normal, -d)) / distSquared;
+
+                if (distSquared < EPSILON) {
+                    continue; // colors can blow up if two points are two close together
+                }
+
+                // Calculate color excluding MIS
+                Vector3f color = ints[i].beta * ints[totalRaysFromCamera + j].beta * cameraBeta * G;
+
+                // include MIS in final color
+                hitColor += color / pSum * std::powf(camera_ps[i] * light_ps[j], 2);
+            }
+        }
+    }
+    
+    return hitColor;
+}
+\end{lstlisting}
+
+\subsection*{Scene Construction and Asset Generation}
+The custom chess pieces were initially modeled in Blender, triangulated, and exported as Wavefront \texttt{.obj} files. To recreate the reference framing, a virtual camera setup was used within the modeling software to extract the exact position offset vector for each individual piece. The surrounding environmental geometry was manually defined directly via object files. Once these assets were loaded into the scene, the final camera coordinates were fine-tuned to perfectly approximate the original perspective.
+
+To accurately render the varying specular properties of the scene, a custom \texttt{DIFF\_MIRROR} material was implemented. This material modifies the standard dielectric glass model by replacing the transmission (refraction) component with a standard Phong diffuse lobe, while retaining the specular reflection component. Crucially, the material dynamically computes the Fresnel reflectance based on the incident viewing angle and the specific Index of Refraction (IOR) assigned to the object. This algorithmic approach allows the reflectivity of a surface to scale physically without introducing unwanted transparency, enabling distinct, controllable specular profiles for the floor tiles, the lighter-colored pieces, and the darker, matte pieces.
+\subsection*{Runtime Parameterization}
+The implementation of the dynamic scene configuration required refactoring the \texttt{Scene} and \texttt{Renderer} classes to decouple the camera state from the rendering logic. An \texttt{eye\_pos} member variable was introduced to the \texttt{Scene} class definition within \texttt{Scene.hpp}. Consequently, the hardcoded camera coordinates previously embedded within \texttt{Renderer.cpp} (e.g., \texttt{Vector3f(278, 273, -800)}) were replaced with dynamic references to \texttt{scene.eye\_pos}. This ensures that parameter values parsed at entry in \texttt{main.cpp} propagate correctly to the rendering loop. 
+
+Standard default values were preserved in the argument parser to maintain normal execution when run without custom flags. The executable now accepts the following parameterized argument structure:
+
+\begin{verbatim}
+    ./RayTracing <eye_x> <eye_y> <eye_z> <width> <height> <spp> <fov> \
+             <king_x> <king_y> <king_z> <king_r> <king_g> <king_b> \
+             <lx> <ly> <lz> <bg_r> <bg_g> <bg_b> <light_emission> \
+             <dim_light_emission> <wall_r> <wall_g> <wall_b> \
+             <smooth> <shadows_on> <bidirectional>
+\end{verbatim}
+
+For example, generating a $256 \times 256$ render with 16 samples per pixel, an FOV of 40, and a translated camera Z-position can be executed identically across environments using:
+\begin{verbatim}
+./RayTracing 278 273 -1000 256 256 16 40
+\end{verbatim}
+
+Because the argument parser cascades, omitting the remaining arguments safely leaves the scene materials and flags at their standard defaults. However, the CLI can also be fully expanded to override the entire scene state. For instance, generating that same render but utilizing low-poly models (for faster debugging) and disabling shadows would be executed by providing all arguments up to the boolean flags:
+\begin{verbatim}
+    ./RayTracing 278 273 -1000 256 256 16 40 \ 
+    0 0 7 0.27 0.25 \
+    0.12 0 0 8 0 0 \
+    0 400 100 0.12 0.12 0.12 0 0 1
+\end{verbatim}
 
 \section*{Rendering Results and Experiments}
 
@@ -194,9 +484,9 @@ Note that semi-reflectivity was handled by giving each ray percentage chance to 
 \section*{Discussion}
 
 
+%Generative AI statement: AI was used to help understand how MIS for bidirectional ray tracing worked and some minor debugging. No code was copied from AI sources
 \bibliographystyle{plain}
 \bibliography{references}
 
-Generative AI statement: AI was used to help understand how MIS for bidirectional ray tracing worked and some minor debugging. No code was copied from AI sources
 
 \end{document}
