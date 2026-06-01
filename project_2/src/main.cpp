@@ -37,7 +37,7 @@ int main(int argc, char** argv)
     float dim_light_emission = 100;
 
     //Anusha: back wall colour defaults (dark grey, same as original)
-    float wall_r = 0.07, wall_g = 0.07, wall_b = 0.07;
+    float wall_r = 0.12, wall_g = 0.12, wall_b = 0.12;
 
     // Charlie: Adding option to use less smooth models for quicker debugging
     bool smooth = true; // make this FALSE for quick debugging, TRUE for final render
@@ -164,7 +164,7 @@ int main(int argc, char** argv)
     mirror_tile->Ks=0;
     mirror_tile->ior=6; 
 
-    Material* diffuse_tile = new Material(DIFF_MIRROR, Vector3f(0.07, 0.07, 0.07)); // working 
+    Material* diffuse_tile = new Material(DIFF_MIRROR, Vector3f(0.13, 0.13, 0.13)); // working 
     diffuse_tile->Kd=1;
     diffuse_tile->Ks=0;
     diffuse_tile->ior=1.5;
