@@ -35,7 +35,7 @@
 \date{}
 
 \begin{document}
-\includepdf[pages=-]{build_latex/declaration.pdf}
+\includepdf[pages=-]{build_latex/declarationproject2.pdf}
 \maketitle
 
 \section*{Project Goal and Scope}
@@ -183,7 +183,7 @@ The most effective way to use multiple importance samplingm in order to create a
 	w_{s,t} = \frac{p_s^\beta}{\sum_{i=0}^{s+t-1} p_i^\beta}
 \end{equation}
 
-where the recommended value for $\beta = 2$
+where the recommended value for $\beta = 2$ \cite{pbr-book}
 
 where $p_i$ is defined as the density for generating path $x_{s,t}$ using $i$ sub light path vertices and $s+t-i$ eye sub path vertices :
 
@@ -191,7 +191,7 @@ where $p_i$ is defined as the density for generating path $x_{s,t}$ using $i$ su
 	p_i = p_{i,s+t-i}(\vec{x_{s,t}})
 \end{equation}
 
-The algorithm suggested in \cite{Vlnas2018} was implemented and is as follows:
+The algorithm suggested in \cite{Vlnas2018}\cite{agraphicsguynotes} was implemented and is as follows:
 
 \begin{algorithm}[H]
 \caption{BDPT}
@@ -547,7 +547,7 @@ To systematically track the rendering experiments, all runtime configurations an
 
 
 \section*{Discussion}
-While formulating the custom \texttt{DIFF\_MIRROR} material based on a modified dielectric glass model successfully achieved the desired hybrid of specular and diffuse characteristics, the resulting visual profile exhibited unintended limitations. Specifically, implementation occasionally conveyed an illusion of slight translucency—an artifact noted during our presentation.
+While formulating the custom \textit{DIFF MIRROR} material based on a modified dielectric glass model successfully achieved a hybrid of specular and diffuse characteristics, the resulting effect is not as close to the motivational image's material characteristics as was desired. The pieces look distinctly glass-like to the extent that it can give the false impression of semi-tranclucence, despite having no refraction component to cause such an impression. An improved implementation might achieve the reflective-diffuse hybrid material through methods based more on the reflection and specularity of coloured metal rather than glass.
 
 %Generative AI statement: AI was used to help understand how MIS for bidirectional ray tracing worked and some minor debugging. No code was copied from AI sources
 \bibliographystyle{plain}
