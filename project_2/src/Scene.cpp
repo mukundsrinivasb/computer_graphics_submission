@@ -104,7 +104,6 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, bool shadows_on)
         float cosTheta_ = std::max(0.0f,dotProduct(N,w_));
 
         ints[i].beta = ints[std::max(0, i - 1)].beta * f * cosTheta_ / pdf / RussianRoulette;
-        // ints[i].inter = inter;
 
         if (i < numRaysFromCamera - 1) {
             // Calculate next intersection
@@ -190,13 +189,13 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, bool shadows_on)
     camera_ps[0] = pdf;
 
     for (int i = 1; i < numRaysFromCamera; i++) {
-        camera_ps[i] = camera_ps[i-1] * dotProduct(w_s[i], w_s[i-1]) / std::powf(getLen(w_s[i], w_s[i-1]), 2) * ints[i].inter.material->pdf(w_s[i-1], w_s[i], ints[i].inter.normal);
+        camera_ps[i] = camera_ps[i-1] * dotProduct(w_s[i], w_s[i-1]) / std::pow(getLen(w_s[i], w_s[i-1]), 2) * ints[i].inter.material->pdf(w_s[i-1], w_s[i], ints[i].inter.normal);
     }
 
     light_ps[0] = lightPdf;
     for (int i = 1; i < numRaysFromLight; i++) {
         light_ps[i] = light_ps[i - 1] * dotProduct(w_s[totalRaysFromCamera + i], w_s[totalRaysFromCamera + i - 1]) / 
-            std::powf(getLen(w_s[totalRaysFromCamera + i], w_s[totalRaysFromCamera + i - 1]), 2) * ints[totalRaysFromCamera + i].inter.material->pdf(w_s[totalRaysFromCamera + i-1], w_s[totalRaysFromCamera + i], ints[totalRaysFromCamera + i].inter.normal);
+            std::pow(getLen(w_s[totalRaysFromCamera + i], w_s[totalRaysFromCamera + i - 1]), 2) * ints[totalRaysFromCamera + i].inter.material->pdf(w_s[totalRaysFromCamera + i-1], w_s[totalRaysFromCamera + i], ints[totalRaysFromCamera + i].inter.normal);
     }
 
     // Calculate sum of squares
@@ -204,7 +203,7 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, bool shadows_on)
 
     for (int i = 0; i < numRaysFromCamera; i++) {
         for (int j = 0; j < numRaysFromLight; j++) {
-            pSum += std::powf(camera_ps[i] * light_ps[j], 2);
+            pSum += std::pow(camera_ps[i] * light_ps[j], 2);
         }
     }
 
@@ -249,7 +248,7 @@ Vector3f Scene::castRayBidirectional(const Ray &ray, int depth, bool shadows_on)
                 Vector3f color = ints[i].beta * ints[totalRaysFromCamera + j].beta * cameraBeta * G;
 
                 // include MIS in final color
-                hitColor += color / pSum * std::powf(camera_ps[i] * light_ps[j], 2);
+                hitColor += color / pSum * std::pow(camera_ps[i] * light_ps[j], 2);
             }
         }
     }
